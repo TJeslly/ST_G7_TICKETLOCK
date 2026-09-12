@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TicketLock — Reserva segura de boletos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #121417;
+    --bg-raised: #1B1F24;
+    --line: #2A2F36;
+    --text: #F4F4F6;
+    --text-dim: #9BA1AC;
+    --accent: #FF3B7F;
+    --amber: #FFB020;
+    --seat-available: #22C55E;
+    --seat-selected: #FF3B7F;
+    --seat-locked: #4A3418;
+    --seat-sold: #23262b;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+  }
+  .display{ font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.02em; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 22px 5%;
+    border-bottom: 1px solid var(--line);
+    position: sticky; top:0;
+    background: rgba(18,20,23,0.92);
+    backdrop-filter: blur(6px);
+    z-index: 10;
+  }
+  .logo{ display:flex; align-items:center; gap:10px; font-family:'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.03em; }
+  .logo .dot{ width:10px; height:10px; border-radius:50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  nav ul{ display:flex; gap: 34px; list-style:none; margin:0; padding:0; }
+  nav a{ color: var(--text-dim); text-decoration:none; font-size: 15px; font-weight: 500; transition: color .15s ease; }
+  nav a.active, nav a:hover{ color: var(--text); }
+  .nav-cta{ background: var(--accent); color: #fff; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; text-decoration:none; }
+
+  .hero{ padding: 64px 5% 40px; border-bottom: 1px dashed var(--line); }
+  .hero-eyebrow{ color: var(--accent); font-weight:600; font-size: 14px; margin-bottom: 10px; }
+  .hero h1{ font-family:'Bebas Neue', sans-serif; font-size: clamp(42px, 7vw, 84px); line-height: 0.95; margin: 0 0 18px; }
+  .hero p{ max-width: 560px; color: var(--text-dim); font-size: 17px; }
+  .hero-meta{ display:flex; gap: 28px; margin-top: 26px; flex-wrap: wrap; }
+  .hero-meta div{ font-size: 14px; color: var(--text-dim); }
+  .hero-meta strong{ display:block; color: var(--text); font-size:17px; }
+
+  .layout{ display:grid; grid-template-columns: 1.5fr 1fr; gap: 40px; padding: 40px 5% 80px; align-items:start; }
+  @media (max-width: 860px){ .layout{ grid-template-columns: 1fr; } }
+
+  .section-title{ font-family:'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.02em; margin: 0 0 6px; }
+  .section-sub{ color: var(--text-dim); font-size: 14px; margin: 0 0 24px; }
+
+  .stage-wrap{ display:flex; justify-content:center; margin-bottom: 22px; }
+  .stage{
+    width: 70%;
+    max-width: 360px;
+    height: 46px;
+    background: linear-gradient(180deg, #2E333B 0%, #1B1F24 100%);
+    border-radius: 0 0 60px 60px;
+    border: 1px solid var(--line);
+    border-top: none;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    padding-bottom: 8px;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    box-shadow: 0 10px 24px -8px rgba(255,59,127,0.25);
+  }
+  .seat-map{ display:grid; grid-template-columns: repeat(10, 1fr); gap: 8px; max-width: 480px; margin: 0 auto 24px; }
+  .seat{ aspect-ratio: 1; border-radius: 5px 5px 8px 8px; background: var(--seat-available); border: none; cursor: pointer; transition: transform .1s ease; }
+  .seat:hover{ transform: translateY(-2px); }
+  .seat.selected{ background: var(--seat-selected); box-shadow: 0 0 10px rgba(255,59,127,.5); }
+  .seat.locked{ background: var(--seat-locked); cursor: not-allowed; }
+  .seat.sold{ background: var(--seat-sold); cursor: not-allowed; opacity:.5; }
+
+  .legend{ display:flex; justify-content:center; gap: 22px; flex-wrap: wrap; font-size: 13px; color: var(--text-dim); }
+  .legend span{ display:flex; align-items:center; gap:8px; }
+  .legend i{ width:12px; height:12px; border-radius:3px; display:inline-block; }
+
+  .features{ margin-top: 48px; display:grid; gap: 18px; }
+  .feature{ display:flex; gap: 16px; padding: 18px 0; border-top: 1px solid var(--line); }
+  .feature .num{ font-family:'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); min-width: 34px; }
+  .feature h3{ margin: 0 0 4px; font-size: 16px; }
+  .feature p{ margin:0; color: var(--text-dim); font-size: 14px; }
+
+  .ticket{ background: var(--bg-raised); border-radius: 14px; position: relative; overflow: hidden; border: 1px solid var(--line); }
+  .ticket-top{ padding: 26px 26px 20px; }
+  .ticket-top .event{ font-size:13px; color: var(--text-dim); margin-bottom:4px; }
+  .ticket-top h2{ font-family:'Bebas Neue', sans-serif; font-size: 30px; margin: 0 0 14px; }
+
+  .timer{ display:flex; align-items:center; gap: 10px; background: rgba(255,176,32,0.1); border: 1px solid rgba(255,176,32,0.35); color: var(--amber); padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+  .timer .clock{ font-family:'Bebas Neue', sans-serif; font-size:18px; letter-spacing:0.05em; }
+
+  .perforation{ position: relative; height: 0; border-top: 2px dashed var(--line); margin: 4px 0; }
+  .perforation::before, .perforation::after{ content:""; position:absolute; top:-11px; width:22px; height:22px; background: var(--bg); border-radius:50%; }
+  .perforation::before{ left:-11px; }
+  .perforation::after{ right:-11px; }
+
+  .ticket-bottom{ padding: 20px 26px 26px; }
+  .line-item{ display:flex; justify-content:space-between; font-size: 14px; color: var(--text-dim); margin-bottom: 10px; }
+  .line-item strong{ color: var(--text); font-weight:600; }
+  .total{ display:flex; justify-content:space-between; align-items:baseline; margin: 16px 0 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .total .amount{ font-family:'Bebas Neue', sans-serif; font-size: 30px; }
+
+  .btn-confirm{ width:100%; background: var(--accent); color:#fff; border:none; padding: 15px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family:'Inter',sans-serif; }
+  .btn-confirm:disabled{ background: var(--line); color: var(--text-dim); cursor: not-allowed; }
+  .hint{ text-align:center; font-size: 12px; color: var(--text-dim); margin-top: 10px; }
+
+  footer{ padding: 26px 5%; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="dot"></span>TICKETLOCK</div>
+  <nav>
+    <ul>
+      <li><a href="#" class="active">Inicio</a></li>
+      <li><a href="#">Eventos</a></li>
+      <li><a href="#">Cómo funciona</a></li>
+      <li><a href="#">Mis boletos</a></li>
+    </ul>
+  </nav>
+  <a href="#" class="nav-cta">Iniciar sesión</a>
+</header>
+
+<section class="hero">
+  <div class="hero-eyebrow">SISTEMA TRANSACCIONAL DE COMPRA DE BOLETOS</div>
+  <h1 class="display">Un asiento reservado<br>solo puede ser tuyo.</h1>
+  <p>TicketLock protege cada compra con control transaccional: mientras eliges tu asiento y pagas, nadie más puede tomarlo. Si algo falla, se libera automáticamente.</p>
+  <div class="hero-meta">
+    <div><strong>Noche de Rock Sinfónico</strong>Evento de ejemplo</div>
+    <div><strong>18 de octubre</strong>8:00 PM</div>
+    <div><strong>Teatro Mayor</strong>Bogotá</div>
+  </div>
+</section>
+
+<div class="layout">
+  <div>
+    <h2 class="section-title">Selecciona tu asiento</h2>
+    <p class="section-sub">Elige un lugar disponible. Se reservará solo para ti durante los próximos minutos.</p>
+
+    <div class="stage-wrap"><div class="stage">ESCENARIO</div></div>
+    <div class="seat-map" id="seatMap"></div>
+    <div class="legend">
+      <span><i style="background:var(--seat-available)"></i> Disponible</span>
+      <span><i style="background:var(--seat-selected)"></i> Tu selección</span>
+      <span><i style="background:var(--seat-locked)"></i> Reservado por otro usuario</span>
+      <span><i style="background:var(--seat-sold)"></i> Vendido</span>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="num">01</div>
+        <div><h3>Selección de evento y asiento</h3><p>El usuario elige el concierto y un asiento disponible en el mapa.</p></div>
+      </div>
+      <div class="feature">
+        <div class="num">02</div>
+        <div><h3>Reserva temporal (bloqueo)</h3><p>El asiento queda bloqueado para los demás mientras se procesa el pago.</p></div>
+      </div>
+      <div class="feature">
+        <div class="num">03</div>
+        <div><h3>Confirmación transaccional</h3><p>Si el pago se completa, la compra se confirma; si no, el asiento se libera.</p></div>
+      </div>
+      <div class="feature">
+        <div class="num">04</div>
+        <div><h3>Registro de auditoría</h3><p>Cada reserva y compra queda registrada para trazabilidad.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="ticket">
+    <div class="ticket-top">
+      <div class="event">Noche de Rock Sinfónico · Teatro Mayor</div>
+      <h2 class="display">Tu reserva</h2>
+      <div class="timer">
+        <span>⏱</span> Asiento reservado por <span class="clock" id="clock">04:59</span>
+      </div>
+    </div>
+    <div class="perforation"></div>
+    <div class="ticket-bottom">
+      <div class="line-item"><span>Asiento</span><strong id="seatLabel">Sin seleccionar</strong></div>
+      <div class="line-item"><span>Zona</span><strong>Platea central</strong></div>
+      <div class="line-item"><span>Precio</span><strong>$180.000 COP</strong></div>
+      <div class="total"><span>Total</span><span class="amount display">$180.000</span></div>
+      <button class="btn-confirm" id="confirmBtn" disabled>Confirmar compra</button>
+      <div class="hint">Al confirmar, el asiento pasa de "reservado" a "vendido".</div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span>TicketLock — Proyecto académico, Sistemas Transaccionales</span>
+  <span>Primera interfaz · sin backend ni base de datos aún</span>
+</footer>
+
+<script>
+  // Solo interacción visual — no hay backend, base de datos ni lógica transaccional real todavía.
+  const seatMap = document.getElementById('seatMap');
+  const seatLabel = document.getElementById('seatLabel');
+  const confirmBtn = document.getElementById('confirmBtn');
+  const totalRows = 4, totalCols = 10;
+  const lockedSeats = new Set(['B4','C7']);
+  const soldSeats = new Set(['A2','A3','D9']);
+  let selected = null;
+
+  for(let r=0; r<totalRows; r++){
+    for(let c=1; c<=totalCols; c++){
+      const rowLetter = String.fromCharCode(65+r);
+      const id = rowLetter + c;
+      const btn = document.createElement('button');
+      btn.className = 'seat';
+      btn.dataset.id = id;
+      if(lockedSeats.has(id)) btn.classList.add('locked');
+      if(soldSeats.has(id)) btn.classList.add('sold');
+      btn.title = id;
+      btn.addEventListener('click', () => {
+        if(btn.classList.contains('locked') || btn.classList.contains('sold')) return;
+        document.querySelectorAll('.seat.selected').forEach(s => s.classList.remove('selected'));
+        btn.classList.add('selected');
+        selected = id;
+        seatLabel.textContent = id;
+        confirmBtn.disabled = false;
+      });
+      seatMap.appendChild(btn);
+    }
+  }
+
+  confirmBtn.addEventListener('click', () => {
+    if(!selected) return;
+    alert('Vista previa de interfaz: aquí se conectará la confirmación transaccional (COMMIT) en una próxima entrega.');
+  });
+
+  let seconds = 299;
+  const clockEl = document.getElementById('clock');
+  setInterval(() => {
+    if(seconds <= 0) return;
+    seconds--;
+    const m = String(Math.floor(seconds/60)).padStart(2,'0');
+    const s = String(seconds%60).padStart(2,'0');
+    clockEl.textContent = `${m}:${s}`;
+  }, 1000);
+</script>
+
+</body>
+</html>
