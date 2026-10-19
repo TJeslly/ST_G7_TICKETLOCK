@@ -46,6 +46,13 @@
   nav a.active, nav a:hover{ color: var(--text); }
   .nav-cta{ background: var(--accent); color: #fff; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; text-decoration:none; }
 
+  .nav-actions{ display:flex; align-items:center; gap: 12px; }
+  .nav-ghost{ color: var(--text); border: 1px solid var(--line); padding: 9px 18px; border-radius: 6px; font-weight: 600; font-size: 14px; text-decoration:none; background: transparent; cursor:pointer; font-family:'Inter',sans-serif; }
+  .nav-ghost:hover{ border-color: var(--accent); color: var(--accent); }
+  .user-chip{ font-size: 14px; color: var(--text-dim); }
+  .user-chip strong{ color: var(--text); }
+  [hidden]{ display:none !important; }
+
   .hero{ padding: 64px 5% 40px; border-bottom: 1px dashed var(--line); }
   .hero-eyebrow{ color: var(--accent); font-weight:600; font-size: 14px; margin-bottom: 10px; }
   .hero h1{ font-family:'Bebas Neue', sans-serif; font-size: clamp(42px, 7vw, 84px); line-height: 0.95; margin: 0 0 18px; }
@@ -119,6 +126,46 @@
   .hint{ text-align:center; font-size: 12px; color: var(--text-dim); margin-top: 10px; }
 
   footer{ padding: 26px 5%; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap: 10px; }
+
+  /* ---- Eventos ---- */
+  .events{ padding: 40px 5% 10px; }
+  .events-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+  .event-card{ background: var(--bg-raised); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display:flex; flex-direction:column; gap:6px; }
+  .event-card.active{ border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .event-card h3{ margin:0 0 4px; font-size: 18px; }
+  .event-card p{ margin:0; color: var(--text-dim); font-size: 14px; }
+  .event-card .disp{ color: var(--seat-available); font-weight:600; }
+  .event-card .btn-secondary{ margin-top: auto; }
+  .event-card .disp{ margin-bottom: 10px; }
+  .btn-secondary{ margin-top: 12px; background: transparent; color: var(--text); border: 1px solid var(--line); padding: 10px; border-radius: 8px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; }
+  .btn-secondary:hover{ border-color: var(--accent); color: var(--accent); }
+  .filters{ display:flex; flex-wrap:wrap; gap:8px; margin: 14px 0 18px; }
+  .chip{ background: transparent; color: var(--text-dim); border: 1px solid var(--line); padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; }
+  .chip.active, .chip:hover{ color: #fff; border-color: var(--accent); background: rgba(255,59,127,.15); }
+  .tag{ align-self:flex-start; font-size: 11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color: var(--amber); background: rgba(255,176,32,.12); padding: 3px 8px; border-radius: 4px; }
+  .msg{ color: var(--text-dim); font-size: 14px; min-height: 20px; }
+
+  /* ---- Registro ---- */
+  .register{ padding: 40px 5% 80px; border-top: 1px dashed var(--line); }
+  .auth-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 460px)); gap: 56px; }
+  .auth-box{ scroll-margin-top: 90px; }
+  .switch-hint{ margin-top: 14px; font-size: 13px; color: var(--text-dim); }
+  .switch-hint a{ color: var(--accent); }
+  .register label{ display:block; margin: 16px 0 6px; font-size: 14px; font-weight: 600; }
+  .register input{ width:100%; padding: 12px 14px; background: var(--bg-raised); border: 1px solid var(--line); border-radius: 8px; color: var(--text); font-size: 15px; font-family:'Inter',sans-serif; }
+  .register input:focus{ outline: 2px solid var(--accent); outline-offset: 1px; }
+  .register input.invalid{ border-color: #EF4444; }
+  .field-hint{ font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+  .field-err{ font-size: 13px; color: #F87171; min-height: 18px; margin-top: 4px; }
+  .register .btn-confirm{ margin-top: 22px; }
+  .form-msg{ margin-top: 14px; font-size: 14px; min-height: 20px; }
+  .form-msg.ok{ color: var(--seat-available); }
+  .form-msg.error{ color: #F87171; }
+
+  /* ---- Estado de conexión ---- */
+  .badge{ display:inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight:600; }
+  .badge-ok{ background: rgba(34,197,94,.15); color: var(--seat-available); }
+  .badge-demo{ background: rgba(255,176,32,.15); color: var(--amber); }
 </style>
 </head>
 <body>
@@ -127,24 +174,37 @@
   <div class="logo"><span class="dot"></span>TICKETLOCK</div>
   <nav>
     <ul>
-      <li><a href="#" class="active">Inicio</a></li>
-      <li><a href="#">Eventos</a></li>
-      <li><a href="#">Cómo funciona</a></li>
-      <li><a href="#">Mis boletos</a></li>
+      <li><a href="#inicio" class="active">Inicio</a></li>
+      <li><a href="#eventos">Eventos</a></li>
+      <li><a href="#como-funciona">Cómo funciona</a></li>
+      <li><a href="#login">Acceso</a></li>
     </ul>
   </nav>
-  <a href="#" class="nav-cta">Iniciar sesión</a>
+  <div class="nav-actions">
+    <span class="user-chip" id="userChip" hidden>Hola, <strong id="userName"></strong></span>
+    <a href="#login" class="nav-ghost" id="navLogin">Iniciar sesión</a>
+    <a href="#registro" class="nav-cta" id="navRegistro">Crear cuenta</a>
+    <button type="button" class="nav-ghost" id="navLogout" hidden>Salir</button>
+  </div>
 </header>
 
-<section class="hero">
+<section class="hero" id="inicio">
   <div class="hero-eyebrow">SISTEMA TRANSACCIONAL DE COMPRA DE BOLETOS</div>
   <h1 class="display">Un asiento reservado<br>solo puede ser tuyo.</h1>
   <p>TicketLock protege cada compra con control transaccional: mientras eliges tu asiento y pagas, nadie más puede tomarlo. Si algo falla, se libera automáticamente.</p>
   <div class="hero-meta">
-    <div><strong>Noche de Rock Sinfónico</strong>Evento de ejemplo</div>
-    <div><strong>18 de octubre</strong>8:00 PM</div>
-    <div><strong>Teatro Mayor</strong>Bogotá</div>
+    <div><strong id="heroNombre">Noche de Rock Sinfónico</strong>Evento seleccionado</div>
+    <div><strong id="heroFecha">18 de octubre, 8:00 PM</strong>Fecha</div>
+    <div><strong id="heroLugar">Teatro Mayor, Bogotá</strong>Lugar</div>
   </div>
+</section>
+
+<section class="events" id="eventos">
+  <h2 class="section-title">Eventos disponibles</h2>
+  <p class="section-sub">Elige un evento para ver el estado de sus asientos en tiempo real.</p>
+  <div class="filters" id="filters" role="group" aria-label="Filtrar eventos"></div>
+  <p class="msg" id="eventsMsg" role="status">Cargando eventos…</p>
+  <div class="events-grid" id="eventsGrid"></div>
 </section>
 
 <div class="layout">
@@ -161,7 +221,7 @@
       <span><i style="background:var(--seat-sold)"></i> Vendido</span>
     </div>
 
-    <div class="features">
+    <div class="features" id="como-funciona">
       <div class="feature">
         <div class="num">01</div>
         <div><h3>Selección de evento y asiento</h3><p>El usuario elige el concierto y un asiento disponible en el mapa.</p></div>
@@ -183,7 +243,7 @@
 
   <aside class="ticket">
     <div class="ticket-top">
-      <div class="event">Noche de Rock Sinfónico · Teatro Mayor</div>
+      <div class="event" id="eventLine">Noche de Rock Sinfónico · Teatro Mayor</div>
       <h2 class="display">Tu reserva</h2>
       <div class="timer">
         <span>⏱</span> Asiento reservado por <span class="clock" id="clock">04:59</span>
@@ -201,57 +261,428 @@
   </aside>
 </div>
 
+<section class="register" id="acceso">
+  <div class="auth-grid">
+    <div class="auth-box" id="login">
+      <h2 class="section-title">Iniciar sesión</h2>
+      <p class="section-sub">Ingresa con tu cuenta para reservar y comprar boletos.</p>
+      <form id="loginForm" novalidate>
+        <label for="loginEmail">Correo electrónico</label>
+        <input id="loginEmail" name="email" type="email" autocomplete="email" maxlength="160">
+        <div class="field-err" id="err-loginEmail" role="alert"></div>
+
+        <label for="loginPassword">Contraseña</label>
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" maxlength="128">
+        <div class="field-err" id="err-loginPassword" role="alert"></div>
+
+        <button type="submit" class="btn-confirm">Iniciar sesión</button>
+        <div class="form-msg" id="loginMsg" role="status"></div>
+        <div class="switch-hint">¿Aún no tienes cuenta? <a href="#registro">Crear cuenta</a></div>
+      </form>
+    </div>
+
+    <div class="auth-box" id="registro">
+      <h2 class="section-title">Crear cuenta</h2>
+      <p class="section-sub">Regístrate para poder reservar y comprar boletos. Los datos se validan antes de guardarse.</p>
+      <form id="registroForm" novalidate>
+        <label for="nombre">Nombre completo</label>
+        <input id="nombre" name="nombre" type="text" autocomplete="name" maxlength="120">
+        <div class="field-err" id="err-nombre" role="alert"></div>
+
+        <label for="email">Correo electrónico</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="160">
+        <div class="field-err" id="err-email" role="alert"></div>
+
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" maxlength="128">
+        <div class="field-hint">Mínimo 8 caracteres, con al menos una letra y un número.</div>
+        <div class="field-err" id="err-password" role="alert"></div>
+
+        <label for="password2">Confirmar contraseña</label>
+        <input id="password2" name="password2" type="password" autocomplete="new-password" maxlength="128">
+        <div class="field-err" id="err-password2" role="alert"></div>
+
+        <button type="submit" class="btn-confirm">Crear cuenta</button>
+        <div class="form-msg" id="formMsg" role="status"></div>
+        <div class="switch-hint">¿Ya tienes cuenta? <a href="#login">Iniciar sesión</a></div>
+      </form>
+    </div>
+  </div>
+</section>
+
 <footer>
   <span>TicketLock — Proyecto académico, Sistemas Transaccionales</span>
-  <span>Primera interfaz · sin backend ni base de datos aún</span>
+  <span class="badge badge-demo" id="apiBadge">Comprobando conexión…</span>
 </footer>
 
 <script>
-  // Solo interacción visual — no hay backend, base de datos ni lógica transaccional real todavía.
+  // ---------- Configuración ----------
+  // En local (o abriendo el archivo directamente) se usa la API de Django.
+  // En GitHub Pages no hay backend: la interfaz funciona en "modo demostración".
+  const ES_LOCAL = ['', 'localhost', '127.0.0.1'].includes(location.hostname);
+  const API_BASE = ES_LOCAL ? 'http://127.0.0.1:8000/api' : null;
+  let modoDemo = !API_BASE;
+
+  const DEMO_EVENTOS = [
+    ['Concierto de prueba', 'Movistar Arena, Bogotá', '2026-12-01T20:00:00-05:00', 4],
+    ['Noche de Rock Sinfónico', 'Teatro Mayor, Bogotá', '2026-11-07T20:00:00-05:00', 4],
+    ['Candlelight: Tributo a Queen', 'Teatro Colón, Bogotá', '2026-11-14T19:30:00-05:00', 5],
+    ['Candlelight: Las Cuatro Estaciones de Vivaldi', 'Teatro Mayor, Bogotá', '2026-11-21T20:00:00-05:00', 6],
+    ['Candlelight: Tributo a Coldplay', 'Teatro Metropolitano, Medellín', '2026-11-28T19:30:00-05:00', 5],
+    ['Candlelight: Música de Studio Ghibli', 'Teatro Municipal, Cali', '2026-12-05T19:00:00-05:00', 5],
+    ['Candlelight: Tributo a Taylor Swift', 'Teatro Colón, Bogotá', '2026-12-12T20:00:00-05:00', 6],
+    ['Candlelight: Navidad con Cuerdas', 'Teatro Mayor, Bogotá', '2026-12-19T19:30:00-05:00', 5],
+    ['Festival de Jazz Bajo las Estrellas', 'Auditorio León de Greiff, Bogotá', '2027-01-16T19:00:00-05:00', 4],
+    ['Noche de Salsa Sinfónica', 'Teatro Metropolitano, Medellín', '2027-01-23T20:30:00-05:00', 5],
+    ['Orquesta Filarmónica: Novena de Beethoven', 'Teatro Mayor, Bogotá', '2027-02-06T19:30:00-05:00', 6]
+  ].map(([nombre, lugar, fecha, filas], i) => ({
+    id: 'demo-' + i, nombre, lugar, fecha, estado: 'PUBLICADO', filas, asientos_disponibles: 0
+  }));
+
+  // Estados repartidos de forma repetible (no cambian al recargar la página).
+  function estadoDemo(clave) {
+    let h = 2166136261;                       // hash FNV-1a de 32 bits
+    for (const ch of clave) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+    const x = ((h >>> 0) % 1000) / 1000;
+    return x < 0.16 ? 'VENDIDO' : x < 0.28 ? 'BLOQUEADO' : 'DISPONIBLE';
+  }
+
+  function demoAsientos(evento) {
+    const lista = [];
+    for (let r = 0; r < evento.filas; r++) {
+      for (let c = 1; c <= 10; c++) {
+        const codigo = String.fromCharCode(65 + r) + c;
+        lista.push({ id: codigo, codigo, estado: estadoDemo(evento.nombre + codigo) });
+      }
+    }
+    return lista;
+  }
+  DEMO_EVENTOS.forEach(ev => {
+    ev.asientos_disponibles = demoAsientos(ev).filter(a => a.estado === 'DISPONIBLE').length;
+  });
+
+  async function api(ruta, opciones) {
+    const res = await fetch(API_BASE + ruta, opciones);
+    let datos = null;
+    try { datos = await res.json(); } catch (e) { /* sin cuerpo */ }
+    return { ok: res.ok, status: res.status, datos };
+  }
+
+  // ---------- Elementos ----------
   const seatMap = document.getElementById('seatMap');
   const seatLabel = document.getElementById('seatLabel');
   const confirmBtn = document.getElementById('confirmBtn');
-  const totalRows = 4, totalCols = 10;
-  const lockedSeats = new Set(['B4','C7']);
-  const soldSeats = new Set(['A2','A3','D9']);
+  const eventsGrid = document.getElementById('eventsGrid');
+  const eventsMsg = document.getElementById('eventsMsg');
+  const apiBadge = document.getElementById('apiBadge');
   let selected = null;
+  let eventoActivo = null;
 
-  for(let r=0; r<totalRows; r++){
-    for(let c=1; c<=totalCols; c++){
-      const rowLetter = String.fromCharCode(65+r);
-      const id = rowLetter + c;
+  const ESTADO_CLASE = { DISPONIBLE: '', BLOQUEADO: 'locked', VENDIDO: 'sold' };
+
+  function formatearFecha(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' });
+  }
+
+  function marcarModo() {
+    apiBadge.textContent = modoDemo
+      ? 'Modo demostración · sin conexión al backend'
+      : 'Conectado al backend (Django + PostgreSQL)';
+    apiBadge.className = 'badge ' + (modoDemo ? 'badge-demo' : 'badge-ok');
+  }
+
+  // ---------- Asientos ----------
+  function renderAsientos(asientos) {
+    seatMap.replaceChildren();
+    selected = null;
+    seatLabel.textContent = 'Sin seleccionar';
+    confirmBtn.disabled = true;
+    asientos.forEach(a => {
       const btn = document.createElement('button');
-      btn.className = 'seat';
-      btn.dataset.id = id;
-      if(lockedSeats.has(id)) btn.classList.add('locked');
-      if(soldSeats.has(id)) btn.classList.add('sold');
-      btn.title = id;
+      btn.className = 'seat ' + (ESTADO_CLASE[a.estado] || '');
+      btn.dataset.id = a.codigo;
+      btn.title = a.codigo + ' · ' + a.estado.toLowerCase();
+      btn.setAttribute('aria-label', 'Asiento ' + a.codigo + ', ' + a.estado.toLowerCase());
       btn.addEventListener('click', () => {
-        if(btn.classList.contains('locked') || btn.classList.contains('sold')) return;
+        if (btn.classList.contains('locked') || btn.classList.contains('sold')) return;
         document.querySelectorAll('.seat.selected').forEach(s => s.classList.remove('selected'));
         btn.classList.add('selected');
-        selected = id;
-        seatLabel.textContent = id;
+        selected = a.codigo;
+        seatLabel.textContent = a.codigo;
         confirmBtn.disabled = false;
       });
       seatMap.appendChild(btn);
+    });
+  }
+
+  async function seleccionarEvento(evento, tarjeta) {
+    eventoActivo = evento;
+    document.querySelectorAll('.event-card').forEach(c => c.classList.remove('active'));
+    if (tarjeta) tarjeta.classList.add('active');
+    document.getElementById('heroNombre').textContent = evento.nombre;
+    document.getElementById('heroFecha').textContent = formatearFecha(evento.fecha);
+    document.getElementById('heroLugar').textContent = evento.lugar;
+    document.getElementById('eventLine').textContent = evento.nombre + ' · ' + evento.lugar;
+
+    if (modoDemo) {
+      renderAsientos(demoAsientos(evento));
+      return;
+    }
+    try {
+      const r = await api('/eventos/' + evento.id + '/asientos/');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      renderAsientos(r.datos.asientos);
+    } catch (e) {
+      eventsMsg.textContent = 'No se pudieron cargar los asientos del evento.';
     }
   }
 
+  // ---------- Eventos ----------
+  const filtersEl = document.getElementById('filters');
+  let todosEventos = [];
+  let filtroActual = 'Todos';
+
+  function categoria(ev) {
+    return ev.nombre.startsWith('Candlelight') ? 'Candlelight' : 'Conciertos';
+  }
+
+  function renderFiltros() {
+    filtersEl.replaceChildren();
+    ['Todos', 'Candlelight', 'Conciertos'].forEach(nombre => {
+      const n = nombre === 'Todos' ? todosEventos.length : todosEventos.filter(e => categoria(e) === nombre).length;
+      if (!n) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (nombre === filtroActual ? ' active' : '');
+      b.textContent = nombre + ' (' + n + ')';
+      b.addEventListener('click', () => { filtroActual = nombre; renderFiltros(); renderEventos(); });
+      filtersEl.appendChild(b);
+    });
+  }
+
+  function renderEventos() {
+    eventsGrid.replaceChildren();
+    const eventos = todosEventos.filter(e => filtroActual === 'Todos' || categoria(e) === filtroActual);
+    if (!eventos.length) {
+      eventsMsg.textContent = 'No hay eventos publicados por ahora.';
+      return;
+    }
+    eventsMsg.textContent = '';
+    eventos.forEach((ev, i) => {
+      const card = document.createElement('article');
+      card.className = 'event-card';
+      card.dataset.id = ev.id;
+
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = categoria(ev);
+      const h = document.createElement('h3');
+      h.textContent = ev.nombre;
+      const f = document.createElement('p');
+      f.textContent = formatearFecha(ev.fecha);
+      const l = document.createElement('p');
+      l.textContent = ev.lugar;
+      const d = document.createElement('p');
+      d.className = 'disp';
+      d.textContent = ev.asientos_disponibles + ' asientos disponibles';
+      const b = document.createElement('button');
+      b.className = 'btn-secondary';
+      b.textContent = 'Ver asientos';
+      b.addEventListener('click', () => {
+        seleccionarEvento(ev, card);
+        document.getElementById('seatMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+
+      card.append(tag, h, f, l, d, b);
+      eventsGrid.appendChild(card);
+      if (i === 0 && !eventoActivo) seleccionarEvento(ev, card);
+      if (eventoActivo && eventoActivo.id === ev.id) card.classList.add('active');
+    });
+  }
+
+  async function cargarEventos() {
+    if (!modoDemo) {
+      try {
+        const r = await api('/eventos/');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        marcarModo();
+        todosEventos = r.datos;
+        renderFiltros();
+        renderEventos();
+        return;
+      } catch (e) {
+        modoDemo = true; // el backend no está en ejecución
+      }
+    }
+    marcarModo();
+    todosEventos = DEMO_EVENTOS;
+    renderFiltros();
+    renderEventos();
+  }
+
+  // ---------- Registro de usuario ----------
+  const form = document.getElementById('registroForm');
+  const formMsg = document.getElementById('formMsg');
+  const CAMPOS = ['nombre', 'email', 'password', 'password2'];
+
+  function mostrarError(campo, texto) {
+    document.getElementById('err-' + campo).textContent = texto || '';
+    document.getElementById(campo).classList.toggle('invalid', !!texto);
+  }
+
+  function validarFormulario() {
+    const v = Object.fromEntries(CAMPOS.map(c => [c, form.elements[c].value]));
+    const errores = {};
+    if (v.nombre.trim().length < 2) errores.nombre = 'El nombre debe tener al menos 2 caracteres.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) errores.email = 'Ingresa un correo válido.';
+    if (v.password.length < 8) errores.password = 'La contraseña debe tener al menos 8 caracteres.';
+    else if (!/[A-Za-z]/.test(v.password) || !/\d/.test(v.password))
+      errores.password = 'La contraseña debe incluir al menos una letra y un número.';
+    if (v.password2 !== v.password) errores.password2 = 'Las contraseñas no coinciden.';
+    CAMPOS.forEach(c => mostrarError(c, errores[c]));
+    return Object.keys(errores).length === 0 ? v : null;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    formMsg.className = 'form-msg';
+    formMsg.textContent = '';
+    const v = validarFormulario();
+    if (!v) return;
+
+    if (modoDemo) {
+      formMsg.className = 'form-msg ok';
+      formMsg.textContent = 'Validación correcta. En modo demostración no se guarda la cuenta; ejecuta el backend para registrarla.';
+      return;
+    }
+    try {
+      const r = await api('/usuarios/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: v.nombre, email: v.email, password: v.password })
+      });
+      if (r.ok) {
+        formMsg.className = 'form-msg ok';
+        formMsg.textContent = 'Cuenta creada para ' + r.datos.nombre + '. Ya puedes iniciar sesión.';
+        form.reset();
+        CAMPOS.forEach(c => mostrarError(c, ''));
+      } else if (r.status === 400 && r.datos) {
+        Object.entries(r.datos).forEach(([campo, msgs]) => {
+          const destino = campo === 'password' ? 'password' : campo;
+          if (CAMPOS.includes(destino)) mostrarError(destino, [].concat(msgs).join(' '));
+        });
+        formMsg.className = 'form-msg error';
+        formMsg.textContent = 'Revisa los campos marcados.';
+      } else {
+        throw new Error('HTTP ' + r.status);
+      }
+    } catch (err) {
+      formMsg.className = 'form-msg error';
+      formMsg.textContent = 'No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.';
+    }
+  });
+
+  // ---------- Inicio de sesión ----------
+  const loginForm = document.getElementById('loginForm');
+  const loginMsg = document.getElementById('loginMsg');
+  const userChip = document.getElementById('userChip');
+  const navLogin = document.getElementById('navLogin');
+  const navRegistro = document.getElementById('navRegistro');
+  const navLogout = document.getElementById('navLogout');
+  let usuarioActual = null;
+
+  function guardarSesion(u) {
+    try { u ? sessionStorage.setItem('ticketlock_usuario', JSON.stringify(u)) : sessionStorage.removeItem('ticketlock_usuario'); } catch (e) { /* sin almacenamiento */ }
+  }
+  function leerSesion() {
+    try { return JSON.parse(sessionStorage.getItem('ticketlock_usuario')); } catch (e) { return null; }
+  }
+  function pintarSesion() {
+    const dentro = !!usuarioActual;
+    userChip.hidden = !dentro;
+    navLogout.hidden = !dentro;
+    navLogin.hidden = dentro;
+    navRegistro.hidden = dentro;
+    if (dentro) document.getElementById('userName').textContent = usuarioActual.nombre;
+  }
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginMsg.className = 'form-msg';
+    loginMsg.textContent = '';
+    const email = loginForm.elements.email.value.trim();
+    const password = loginForm.elements.password.value;
+    const errores = {};
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errores.loginEmail = 'Ingresa un correo válido.';
+    if (!password) errores.loginPassword = 'La contraseña es obligatoria.';
+    ['loginEmail', 'loginPassword'].forEach(c => mostrarError(c, errores[c]));
+    if (Object.keys(errores).length) return;
+
+    if (modoDemo) {
+      loginMsg.className = 'form-msg ok';
+      loginMsg.textContent = 'Validación correcta. En modo demostración no hay cuentas; ejecuta el backend para iniciar sesión.';
+      return;
+    }
+    try {
+      const r = await api('/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (r.ok) {
+        usuarioActual = r.datos;
+        guardarSesion(usuarioActual);
+        pintarSesion();
+        loginForm.reset();
+        loginMsg.className = 'form-msg ok';
+        loginMsg.textContent = 'Sesión iniciada. Bienvenido/a, ' + r.datos.nombre + '.';
+      } else if (r.status === 401 || r.status === 400) {
+        loginMsg.className = 'form-msg error';
+        loginMsg.textContent = (r.datos && r.datos.detail) || 'Revisa los datos ingresados.';
+      } else {
+        throw new Error('HTTP ' + r.status);
+      }
+    } catch (err) {
+      loginMsg.className = 'form-msg error';
+      loginMsg.textContent = 'No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.';
+    }
+  });
+
+  navLogout.addEventListener('click', () => {
+    usuarioActual = null;
+    guardarSesion(null);
+    pintarSesion();
+    loginMsg.className = 'form-msg';
+    loginMsg.textContent = 'Sesión cerrada.';
+  });
+
+  usuarioActual = leerSesion();
+  pintarSesion();
+
+  // ---------- Confirmación (se conectará en la siguiente entrega) ----------
   confirmBtn.addEventListener('click', () => {
-    if(!selected) return;
+    if (!selected) return;
+    if (!usuarioActual && !modoDemo) {
+      alert('Inicia sesión para continuar con la compra.');
+      location.hash = '#login';
+      return;
+    }
     alert('Vista previa de interfaz: aquí se conectará la confirmación transaccional (COMMIT) en una próxima entrega.');
   });
 
+  // ---------- Temporizador visual ----------
   let seconds = 299;
   const clockEl = document.getElementById('clock');
   setInterval(() => {
-    if(seconds <= 0) return;
+    if (seconds <= 0) return;
     seconds--;
-    const m = String(Math.floor(seconds/60)).padStart(2,'0');
-    const s = String(seconds%60).padStart(2,'0');
+    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const s = String(seconds % 60).padStart(2, '0');
     clockEl.textContent = `${m}:${s}`;
   }, 1000);
+
+  cargarEventos();
 </script>
 
 </body>
