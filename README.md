@@ -88,8 +88,15 @@ Usuario.objects.all()
 
 ```
 ST_G7_TICKETLOCK/
-├── backend/          Proyecto Django (API REST)
-│   ├── core/          App con los modelos del dominio
+├── index.html         Interfaz (catálogo, mapa de asientos, registro e inicio de sesión)
+├── backend/           Proyecto Django (API REST)
+│   ├── core/          App con modelos, API y pruebas
+│   │   ├── management/commands/seed_catalogo.py  Catálogo de eventos de demostración
+│   │   ├── models.py       Modelos del dominio (siete tablas)
+│   │   ├── serializers.py  Validaciones y conversión de datos
+│   │   ├── views.py        Vistas de la API
+│   │   ├── urls.py         Rutas de la API
+│   │   └── tests.py        Pruebas automáticas
 │   └── ticketlock/    Configuración del proyecto
 ├── database/          Scripts SQL
 │   ├── schema.sql      Creación de tablas, PK, FK y restricciones
@@ -98,6 +105,56 @@ ST_G7_TICKETLOCK/
 └── requirements.txt   Dependencias de Python
 ```
 
+## Ejecutar el backend y la interfaz
+
+1. Con el entorno virtual activado y la base de datos creada, iniciar el servidor desde la carpeta `backend`:
+
+```
+cd backend
+python manage.py runserver
+```
+
+2. Abrir el archivo `index.html` en el navegador (doble clic). La interfaz consulta la API en `http://127.0.0.1:8000/api` y muestra el estado de conexión en el pie de página. Si el backend no está en ejecución, funciona en modo demostración con datos de ejemplo (es lo que se ve en GitHub Pages).
+
+## API disponible
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/eventos/` | Lista los eventos publicados con su disponibilidad (RF03) |
+| GET | `/api/eventos/<id>/asientos/` | Estado de cada asiento de un evento (RF04) |
+| POST | `/api/usuarios/` | Registra un usuario con validaciones (RF01) |
+| POST | `/api/login/` | Verifica credenciales e inicia sesión; el intento queda en auditoría (RF02) |
+
+Validaciones del registro: nombre de al menos 2 caracteres, correo con formato válido y único (sin distinguir mayúsculas), contraseña de al menos 8 caracteres con una letra y un número. La contraseña se guarda con hash y cada registro queda anotado en la tabla `auditoria` (RF14).
+
+Ejemplo:
+
+```
+curl -X POST http://127.0.0.1:8000/api/usuarios/ -H "Content-Type: application/json" -d "{\"nombre\":\"Ana Perez\",\"email\":\"ana@correo.com\",\"password\":\"Clave1234\"}"
+```
+
+Inicio de sesión: devuelve los datos públicos del usuario (nunca el hash). Si el correo no existe o la contraseña es incorrecta responde siempre con el mismo mensaje (401) para no revelar qué cuentas existen. Por ahora no emite token: JWT queda para la siguiente entrega.
+
+## Catálogo de demostración
+
+La base trae un solo evento de prueba con 4 asientos (`database/seed.sql`). Para cargar un catálogo más amplio (conciertos y ciclo *Candlelight*) y completar el mapa de asientos de cada evento:
+
+```
+cd backend
+python manage.py seed_catalogo
+```
+
+El comando es idempotente: se puede ejecutar varias veces sin duplicar eventos ni asientos. Los estados *bloqueado* y *vendido* que se ven en el mapa son datos de demostración; la reserva y la compra reales se implementarán con el control de concurrencia.
+
+## Pruebas
+
+```
+cd backend
+python manage.py test
+```
+
+Las pruebas cubren el listado de eventos, el orden de los asientos, el registro de usuarios y sus validaciones (campos obligatorios, correo inválido o duplicado, contraseña débil), el inicio de sesión (credenciales correctas e incorrectas, auditoría) y la carga idempotente del catálogo.
+
 ## Estado del proyecto
 
-Fase actual: estructura de base de datos y backend inicial. Aún no se han implementado las operaciones CRUD ni la lógica transaccional de compra.
+Fase actual: primera versión funcional. La interfaz consulta eventos y asientos desde PostgreSQL y permite registrar usuarios con validaciones e iniciar sesión. Aún no se han implementado los tokens JWT, el bloqueo temporal de asientos ni la confirmación transaccional de la compra.
