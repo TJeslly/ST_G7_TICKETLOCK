@@ -147,7 +147,7 @@ Los errores de conexión llegan a la interfaz como `503` con el mensaje «No se 
 | POST | `/api/reservas/` 🔒 | Bloquea un asiento durante 5 minutos para el usuario (RF05) |
 | GET | `/api/reservas/mias/` 🔒 | Reservas vigentes del usuario, con su hora de expiración |
 | DELETE | `/api/reservas/<id>/` 🔒 | El usuario libera su reserva antes de que expire |
-| POST | `/api/compras/` 🔒 | Confirma la compra de los asientos reservados, en una sola transacción (RF07, RF08) |
+| POST | `/api/compras/` 🔒 | Paga (simulado) y confirma la compra de los asientos reservados, en una sola transacción (RF07, RF08). Body: `asiento_ids` y `pago` (`numero`, `titular`, `vencimiento` MM/AA, `cvv`). Responde 201 con el comprobante, 400 si la tarjeta es inválida, 402 si el pago es rechazado y 409 si la reserva no es válida |
 | GET | `/api/compras/` 🔒 | Historial de compras del usuario (RF09) |
 | GET/POST | `/api/admin/eventos/` 🔒 ADMIN | Lista todos los eventos y crea uno con su cuadrícula de asientos (RF11, RF12) |
 | PATCH | `/api/admin/eventos/<id>/` 🔒 ADMIN | Publica, cierra o cancela un evento (RF13) |
@@ -198,7 +198,20 @@ python manage.py test
 
 Para entrar como administrador: `python manage.py crear_admin tu@correo.com TuClave123` (el usuario del `seed.sql` tiene una contraseña ficticia).
 
-Hay 58 pruebas. Cubren la conexión (`/api/salud/`, errores 503), la restricción `CHECK` de la auditoría, el registro y el inicio de sesión, el token (alterado, vencido, rol), la reserva (conflicto, expiración, límite de 4, liberación), la compra (atomicidad, idempotencia, reservas ajenas o vencidas, historial), el perfil (edición de datos, cambio de contraseña, correo repetido), los permisos (un usuario normal no puede ver la auditoría, no puede darse el rol ADMIN al registrarse ni con un token falsificado), la administración de eventos y, con hilos reales sobre PostgreSQL, la **concurrencia**: 10 personas reservando el mismo asiento (solo una lo logra), 6 compras simultáneas del mismo asiento (una sola venta) y compras cruzadas sin interbloqueo.
+Hay 69 pruebas. Cubren la conexión (`/api/salud/`, errores 503), la restricción `CHECK` de la auditoría, el registro y el inicio de sesión, el token (alterado, vencido, rol), la reserva (conflicto, expiración, límite de 4, liberación), la compra (atomicidad, idempotencia, reservas ajenas o vencidas, historial), el perfil (edición de datos, cambio de contraseña, correo repetido), los permisos (un usuario normal no puede ver la auditoría, no puede darse el rol ADMIN al registrarse ni con un token falsificado), la administración de eventos y, con hilos reales sobre PostgreSQL, la **concurrencia**: 10 personas reservando el mismo asiento (solo una lo logra), 6 compras simultáneas del mismo asiento (una sola venta) y compras cruzadas sin interbloqueo. También se prueba el simulador de pago: tarjeta aprobada, rechazada por el banco, fondos insuficientes (la reserva se conserva y se puede reintentar), validación de Luhn, vencimiento y CVV, y que los datos de la tarjeta no se guardan.
+
+## Simulador de pago
+
+Al pulsar **Confirmar compra** se abre una ventana de pago que pide los datos de una **tarjeta ficticia**. Es una pasarela simulada (`backend/core/pagos.py`): no se conecta a ningún banco ni cobra dinero real.
+
+| Tarjeta de prueba | Resultado |
+|---|---|
+| `4242 4242 4242 4242` | Aprobada |
+| `4000 0000 0000 0002` | Rechazada por el banco emisor (402) |
+| `4000 0000 0000 9995` | Rechazada por fondos insuficientes (402) |
+| Cualquier otra con número válido (Luhn), p. ej. `5555 5555 5555 4444` | Aprobada |
+
+Cómo funciona: el servidor valida el número (Luhn), el vencimiento (futuro, formato MM/AA) y el CVV (3 o 4 dígitos); luego, dentro de la misma transacción de la compra y **después** de verificar las reservas, simula la autorización. Si se rechaza, no se vende nada y la reserva se conserva para reintentar con otra tarjeta. Si se aprueba, se confirma la compra atómica y se muestra un comprobante (código de compra, tarjeta `•••• 4242`, número de autorización simulado). Los datos de la tarjeta **no se guardan** en la base de datos, ni en la auditoría, ni en los registros; del pago solo se devuelve la marca y los últimos 4 dígitos.
 
 ## Despliegue con Docker y NGINX
 
@@ -213,6 +226,6 @@ Levanta PostgreSQL (con `schema.sql` y `seed.sql`), una tarea que prepara la bas
 
 ## Estado del proyecto
 
-Funcionalidades implementadas: registro e inicio de sesión en vistas separadas, con token y roles, perfil del usuario (editar datos, cambiar contraseña, próximas entradas e historial de compras), catálogo de eventos con ilustración propia y mapa de asientos desde PostgreSQL, reserva temporal de asientos con cuenta regresiva y liberación automática, compra atómica con idempotencia, historial de compras, administración de eventos y auditoría (solo ADMIN), control de concurrencia verificado con pruebas, y despliegue con Docker y NGINX. El detalle de la Fase 4 (diseño, navegabilidad y base de datos) está en `docs/FASE4_CAMBIOS.md`.
+Funcionalidades implementadas: registro e inicio de sesión en vistas separadas, con token y roles, perfil del usuario (editar datos, cambiar contraseña, próximas entradas e historial de compras), catálogo de eventos con ilustración propia y mapa de asientos desde PostgreSQL, reserva temporal de asientos con cuenta regresiva y liberación automática, simulador de pago con tarjeta ficticia y comprobante, compra atómica con idempotencia, historial de compras, administración de eventos y auditoría (solo ADMIN), control de concurrencia verificado con pruebas, y despliegue con Docker y NGINX. El detalle de la Fase 4 (diseño, navegabilidad y base de datos) está en `docs/FASE4_CAMBIOS.md`.
 
-Pendientes y limitaciones conocidas: el pago es simulado (no hay pasarela), el token no se renueva (dura 2 horas), el CORS está abierto para desarrollo y la configuración de Docker se validó solo en su sintaxis: falta probarla en ejecución en tu equipo.
+Pendientes y limitaciones conocidas: el pago es una simulación con tarjetas ficticias (no hay pasarela real), el token no se renueva (dura 2 horas), el CORS está abierto para desarrollo y la configuración de Docker se validó solo en su sintaxis: falta probarla en ejecución en tu equipo.
