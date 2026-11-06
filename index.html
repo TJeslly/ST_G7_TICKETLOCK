@@ -58,9 +58,6 @@
   .hero-eyebrow{ color: var(--accent); font-weight:600; font-size: 14px; margin-bottom: 10px; }
   .hero h1{ font-family:'Bebas Neue', sans-serif; font-size: clamp(42px, 7vw, 84px); line-height: 0.95; margin: 0 0 18px; }
   .hero p{ max-width: 560px; color: var(--text-dim); font-size: 17px; }
-  .hero-meta{ display:flex; gap: 28px; margin-top: 26px; flex-wrap: wrap; }
-  .hero-meta div{ font-size: 14px; color: var(--text-dim); }
-  .hero-meta strong{ display:block; color: var(--text); font-size:17px; }
 
   .layout{ display:grid; grid-template-columns: 1.5fr 1fr; gap: 40px; padding: 40px 5% 80px; align-items:start; }
   @media (max-width: 860px){ .layout{ grid-template-columns: 1fr; } }
@@ -126,7 +123,7 @@
   .btn-confirm:disabled{ background: var(--line); color: var(--text-dim); cursor: not-allowed; }
   .hint{ text-align:center; font-size: 12px; color: var(--text-dim); margin-top: 10px; }
 
-  footer{ padding: 26px 5% 76px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap: 10px; }
+  footer{ padding: 26px 5% 100px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap: 10px; }
 
   /* ---- Eventos ---- */
   .events{ padding: 40px 5% 10px; }
@@ -179,6 +176,38 @@
     box-shadow: 0 6px 18px rgba(0,0,0,.35);
   }
   .to-top[hidden]{ display:none; }
+  [hidden]{ display:none !important; }
+
+  /* ---- Mis compras y administración ---- */
+  .compra{ background: var(--bg-raised); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; max-width: 760px; }
+  .compra h3{ margin: 0 0 4px; font-size: 16px; }
+  .compra .meta{ color: var(--text-dim); font-size: 13px; }
+  .compra .boletos{ margin: 10px 0 0; padding: 0; list-style: none; display:flex; flex-wrap:wrap; gap:8px; }
+  .compra .boletos li{ background: rgba(34,197,94,.12); color: var(--seat-available); border-radius: 6px; padding: 4px 10px; font-size: 13px; font-weight:600; }
+  .admin-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 20px; max-width: 760px; }
+  .admin-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; background: var(--bg-raised); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; max-width:760px; font-size:14px; }
+  .admin-row .nombre{ flex:1 1 220px; font-weight:600; }
+  .admin-row .estado{ font-size:12px; color: var(--amber); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+  .admin-row button{ background:transparent; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; }
+  .admin-row button:hover{ border-color: var(--accent); color: var(--accent); }
+  .audit-table{ border-collapse: collapse; width:100%; max-width:760px; font-size:13px; margin-top:8px; }
+  .audit-table th, .audit-table td{ text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  .audit-table th{ color: var(--text-dim); font-weight:600; }
+  .event-img{ display:block; width: calc(100% + 40px); height: 140px; object-fit: cover; margin: -20px -20px 10px; border-radius: 12px 12px 0 0; }
+  .auth-grid{ grid-template-columns: minmax(300px, 460px) !important; }
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin: 6px 0 22px; }
+  .tab{ background: transparent; color: var(--text-dim); border:1px solid var(--line); padding: 9px 16px; border-radius: 999px; font: 600 14px 'Inter', sans-serif; cursor:pointer; }
+  .tab[aria-selected="true"], .tab:hover{ color:#fff; border-color: var(--accent); background: rgba(255,59,127,.15); }
+  .perfil-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 420px)); gap: 40px; }
+  .entrada{ display:flex; gap:16px; align-items:stretch; background: var(--bg-raised); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:12px; max-width:760px; }
+  .entrada img{ width:150px; object-fit:cover; flex:none; }
+  .entrada .info{ padding:14px 16px 14px 0; }
+  .entrada h3{ margin:0 0 4px; font-size:16px; }
+  .entrada .meta{ color: var(--text-dim); font-size:13px; margin:2px 0; }
+  .entrada .asiento{ display:inline-block; margin-top:8px; background: rgba(34,197,94,.12); color: var(--seat-available); border-radius:6px; padding:4px 10px; font-size:13px; font-weight:700; }
+  .entrada .faltan{ color: var(--amber); font-size:13px; font-weight:600; }
+  .seat.mine{ background: var(--seat-selected); box-shadow: 0 0 10px rgba(255,59,127,.5); cursor:pointer; }
+
   .to-top:focus-visible, nav a:focus-visible{ outline: 2px solid #fff; outline-offset: 3px; }
 </style>
 </head>
@@ -192,7 +221,9 @@
       <li><a href="#eventos">Eventos</a></li>
       <li><a href="#asientos">Asientos</a></li>
       <li><a href="#como-funciona">Cómo funciona</a></li>
-      <li><a href="#acceso">Cuenta</a></li>
+      <li id="liCuenta"><a href="#login">Cuenta</a></li>
+      <li id="liPerfil" hidden><a href="#perfil">Mi perfil</a></li>
+      <li id="liAdmin" hidden><a href="#admin">Administración</a></li>
     </ul>
   </nav>
   <div class="nav-actions">
@@ -207,11 +238,6 @@
   <div class="hero-eyebrow">SISTEMA TRANSACCIONAL DE COMPRA DE BOLETOS</div>
   <h1 class="display">Un asiento reservado<br>solo puede ser tuyo.</h1>
   <p>TicketLock protege cada compra con control transaccional: mientras eliges tu asiento y pagas, nadie más puede tomarlo. Si algo falla, se libera automáticamente.</p>
-  <div class="hero-meta">
-    <div><strong id="heroNombre">Noche de Rock Sinfónico</strong>Evento seleccionado</div>
-    <div><strong id="heroFecha">18 de octubre, 8:00 PM</strong>Fecha</div>
-    <div><strong id="heroLugar">Teatro Mayor, Bogotá</strong>Lugar</div>
-  </div>
 </section>
 
 <section class="events" id="eventos">
@@ -261,20 +287,84 @@
       <div class="event" id="eventLine">Noche de Rock Sinfónico · Teatro Mayor</div>
       <h2 class="display">Tu reserva</h2>
       <div class="timer">
-        <span>⏱</span> Asiento reservado por <span class="clock" id="clock">04:59</span>
+        <span>⏱</span> <span id="clockLabel">Sin reservas activas</span> <span class="clock" id="clock">--:--</span>
       </div>
     </div>
     <div class="perforation"></div>
     <div class="ticket-bottom">
       <div class="line-item"><span>Asiento</span><strong id="seatLabel">Sin seleccionar</strong></div>
-      <div class="line-item"><span>Zona</span><strong>Platea central</strong></div>
-      <div class="line-item"><span>Precio</span><strong>$180.000 COP</strong></div>
-      <div class="total"><span>Total</span><span class="amount display">$180.000</span></div>
+      <div class="line-item"><span>Precio por boleto</span><strong id="precioLinea">$180.000 COP</strong></div>
+      <div class="total"><span>Total</span><span class="amount display" id="totalAmount">$0</span></div>
       <button class="btn-confirm" id="confirmBtn" disabled>Confirmar compra</button>
-      <div class="hint">Al confirmar, el asiento pasa de "reservado" a "vendido".</div>
+      <div class="form-msg" id="ticketMsg" role="status"></div>
+      <div class="hint">Puedes reservar hasta 4 asientos. Al confirmar, pasan de "reservado" a "vendido" en una sola transacción.</div>
     </div>
   </aside>
 </div>
+
+<section class="register" id="perfil" hidden>
+  <h2 class="section-title">Mi perfil</h2>
+  <p class="section-sub">Administra tus datos, revisa las entradas de tus próximos eventos y consulta tus compras.</p>
+  <div class="tabs" role="tablist" aria-label="Secciones del perfil">
+    <button type="button" class="tab" role="tab" id="tabBtnDatos" aria-selected="true" data-tab="Datos">Mis datos</button>
+    <button type="button" class="tab" role="tab" id="tabBtnProximas" aria-selected="false" data-tab="Proximas">Próximas entradas</button>
+    <button type="button" class="tab" role="tab" id="tabBtnHistorial" aria-selected="false" data-tab="Historial">Historial de compras</button>
+  </div>
+
+  <div id="tabDatos" role="tabpanel">
+    <div class="perfil-grid">
+      <form id="perfilForm" novalidate>
+        <h3>Datos personales</h3>
+        <label for="pfNombre">Nombre completo</label>
+        <input id="pfNombre" maxlength="120" autocomplete="name">
+        <label for="pfEmail">Correo electrónico</label>
+        <input id="pfEmail" type="email" maxlength="160" autocomplete="email">
+        <button type="submit" class="btn-confirm">Guardar cambios</button>
+        <div class="form-msg" id="perfilMsg" role="status"></div>
+      </form>
+      <form id="passForm" novalidate>
+        <h3>Cambiar contraseña</h3>
+        <label for="pfActual">Contraseña actual</label>
+        <input id="pfActual" type="password" maxlength="128" autocomplete="current-password">
+        <label for="pfNueva">Contraseña nueva</label>
+        <input id="pfNueva" type="password" maxlength="128" autocomplete="new-password">
+        <div class="field-hint">Mínimo 8 caracteres, con al menos una letra y un número.</div>
+        <label for="pfNueva2">Confirmar contraseña nueva</label>
+        <input id="pfNueva2" type="password" maxlength="128" autocomplete="new-password">
+        <button type="submit" class="btn-confirm">Actualizar contraseña</button>
+        <div class="form-msg" id="passMsg" role="status"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="tabProximas" role="tabpanel" hidden>
+    <div id="proximasList"><p class="msg">No tienes entradas para próximos eventos.</p></div>
+  </div>
+
+  <div id="tabHistorial" role="tabpanel" hidden>
+    <div id="comprasList"><p class="msg">Aún no has comprado boletos.</p></div>
+  </div>
+</section>
+
+<section class="register" id="admin" hidden>
+  <h2 class="section-title">Administración de eventos</h2>
+  <p class="section-sub">Solo para administradores. Crea eventos (con su cuadrícula de asientos), cambia su estado y consulta la auditoría.</p>
+  <form id="adminForm" novalidate>
+    <div class="admin-grid">
+      <div><label for="adNombre">Nombre del evento</label><input id="adNombre" maxlength="160"></div>
+      <div><label for="adLugar">Lugar</label><input id="adLugar" maxlength="160"></div>
+      <div><label for="adFecha">Fecha y hora</label><input id="adFecha" type="datetime-local"></div>
+      <div><label for="adFilas">Filas (1–10)</label><input id="adFilas" type="number" min="1" max="10" value="4"></div>
+      <div><label for="adCols">Columnas (1–20)</label><input id="adCols" type="number" min="1" max="20" value="10"></div>
+    </div>
+    <button type="submit" class="btn-confirm" style="max-width:260px">Crear evento</button>
+    <div class="form-msg" id="adminMsg" role="status"></div>
+  </form>
+  <h3 style="margin-top:28px">Eventos</h3>
+  <div id="adminEventos"></div>
+  <h3 style="margin-top:28px">Auditoría reciente</h3>
+  <table class="audit-table"><thead><tr><th>Fecha</th><th>Acción</th><th>Recurso</th><th>Resultado</th></tr></thead><tbody id="auditBody"></tbody></table>
+</section>
 
 <section class="register" id="acceso">
   <div class="auth-grid">
@@ -296,7 +386,7 @@
       </form>
     </div>
 
-    <div class="auth-box" id="registro">
+    <div class="auth-box" id="registro" hidden>
       <h2 class="section-title">Crear cuenta</h2>
       <p class="section-sub">Regístrate para poder reservar y comprar boletos. Los datos se validan antes de guardarse.</p>
       <form id="registroForm" novalidate>
@@ -339,7 +429,8 @@
   // En local (o abriendo el archivo directamente) se usa la API de Django.
   // En GitHub Pages no hay backend: la interfaz funciona en "modo demostración".
   const ES_LOCAL = ['', 'localhost', '127.0.0.1'].includes(location.hostname);
-  const API_BASE = ES_LOCAL ? 'http://127.0.0.1:8000/api' : null;
+  // Con Docker (NGINX en el puerto 8080) la API está en el mismo origen; con runserver, en el puerto 8000.
+  const API_BASE = ES_LOCAL ? (location.port === '8080' ? '/api' : 'http://127.0.0.1:8000/api') : null;
   let modoDemo = !API_BASE;
 
   const DEMO_EVENTOS = [
@@ -394,8 +485,9 @@
   const eventsGrid = document.getElementById('eventsGrid');
   const eventsMsg = document.getElementById('eventsMsg');
   const apiBadge = document.getElementById('apiBadge');
-  let selected = null;
   let eventoActivo = null;
+  const PRECIO = 180000; // COP por boleto (el servidor calcula el total definitivo)
+  const misReservas = new Map(); // id de asiento -> { bloqueoId, codigo, expira (ms) }
 
   const ESTADO_CLASE = { DISPONIBLE: '', BLOQUEADO: 'locked', VENDIDO: 'sold' };
 
@@ -437,51 +529,210 @@
     } catch (e) { /* sin backend: ya se muestra el modo demostración */ }
   }
 
-  // ---------- Asientos ----------
+  // ---------- Asientos y reservas ----------
+  const ticketMsg = document.getElementById('ticketMsg');
+  const clockEl = document.getElementById('clock');
+  const clockLabel = document.getElementById('clockLabel');
+  const fmtCOP = n => '$' + n.toLocaleString('es-CO');
+
+  function mensajeTicket(texto, tipo) {
+    ticketMsg.textContent = texto || '';
+    ticketMsg.className = 'form-msg' + (tipo ? ' ' + tipo : '');
+  }
+
+  function pintarPanel() {
+    const n = misReservas.size;
+    seatLabel.textContent = n ? [...misReservas.values()].map(r => r.codigo).join(', ') : 'Sin seleccionar';
+    document.getElementById('totalAmount').textContent = fmtCOP(PRECIO * n);
+    document.getElementById('precioLinea').textContent = n ? n + ' × ' + fmtCOP(PRECIO) + ' COP' : fmtCOP(PRECIO) + ' COP';
+    confirmBtn.disabled = n === 0;
+    pintarReloj();
+  }
+
+  function pintarReloj() {
+    const vencen = [...misReservas.values()].map(r => r.expira).filter(Boolean);
+    if (!vencen.length) {
+      clockLabel.textContent = misReservas.size ? 'Modo demostración · sin tiempo límite' : 'Sin reservas activas';
+      clockEl.textContent = '--:--';
+      return null;
+    }
+    const resto = Math.max(0, Math.floor((Math.min(...vencen) - Date.now()) / 1000));
+    clockLabel.textContent = 'Reserva vigente por';
+    clockEl.textContent = String(Math.floor(resto / 60)).padStart(2, '0') + ':' + String(resto % 60).padStart(2, '0');
+    return resto;
+  }
+
+  // Todas las operaciones protegidas envían el token de sesión (JWT).
+  async function apiAuth(ruta, opciones) {
+    const cabeceras = { 'Content-Type': 'application/json' };
+    if (usuarioActual && usuarioActual.token) cabeceras.Authorization = 'Bearer ' + usuarioActual.token;
+    const r = await api(ruta, Object.assign({}, opciones, { headers: cabeceras }));
+    if (r.status === 401 && usuarioActual) cerrarSesion('Tu sesión expiró. Inicia sesión de nuevo.');
+    return r;
+  }
+
+  async function cargarMisReservas() {
+    misReservas.clear();
+    if (modoDemo || !usuarioActual) { pintarPanel(); return; }
+    try {
+      const r = await apiAuth('/reservas/mias/');
+      if (r.ok) r.datos.forEach(b => misReservas.set(b.asiento_id, { bloqueoId: b.id, codigo: b.codigo, expira: Date.parse(b.expira) }));
+    } catch (e) { /* sin conexión */ }
+    pintarPanel();
+  }
+
   function renderAsientos(asientos) {
     seatMap.replaceChildren();
-    selected = null;
-    seatLabel.textContent = 'Sin seleccionar';
-    confirmBtn.disabled = true;
     asientos.forEach(a => {
       const btn = document.createElement('button');
-      btn.className = 'seat ' + (ESTADO_CLASE[a.estado] || '');
-      btn.dataset.id = a.codigo;
-      btn.title = a.codigo + ' · ' + a.estado.toLowerCase();
-      btn.setAttribute('aria-label', 'Asiento ' + a.codigo + ', ' + a.estado.toLowerCase());
+      const mio = misReservas.has(a.id);
+      btn.className = 'seat ' + (mio ? 'mine selected' : (ESTADO_CLASE[a.estado] || ''));
+      btn.dataset.id = a.id;
+      const estadoTxt = mio ? 'reservado por ti' : a.estado.toLowerCase();
+      btn.title = a.codigo + ' · ' + estadoTxt;
+      btn.setAttribute('aria-label', 'Asiento ' + a.codigo + ', ' + estadoTxt);
       btn.addEventListener('click', () => {
-        if (btn.classList.contains('locked') || btn.classList.contains('sold')) return;
-        document.querySelectorAll('.seat.selected').forEach(s => s.classList.remove('selected'));
-        btn.classList.add('selected');
-        selected = a.codigo;
-        seatLabel.textContent = a.codigo;
-        confirmBtn.disabled = false;
+        if (!mio && (btn.classList.contains('locked') || btn.classList.contains('sold'))) return;
+        alternarAsiento(a, btn);
       });
       seatMap.appendChild(btn);
     });
+    pintarPanel();
+  }
+
+  async function recargarAsientos() {
+    if (!eventoActivo || modoDemo) return;
+    try {
+      const r = await api('/eventos/' + eventoActivo.id + '/asientos/');
+      if (r.ok) { await cargarMisReservas(); renderAsientos(r.datos.asientos); }
+    } catch (e) { /* se reintenta en el siguiente ciclo */ }
+  }
+
+  async function alternarAsiento(a, btn) {
+    mensajeTicket('');
+    if (modoDemo) { // sin backend: selección local de un solo asiento
+      const era = misReservas.has(a.id);
+      misReservas.clear();
+      document.querySelectorAll('.seat.selected').forEach(x => x.classList.remove('selected', 'mine'));
+      if (!era) { misReservas.set(a.id, { bloqueoId: null, codigo: a.codigo, expira: null }); btn.classList.add('selected'); }
+      pintarPanel();
+      return;
+    }
+    if (!usuarioActual) {
+      mensajeTicket('Inicia sesión para reservar un asiento.', 'error');
+      destinoTrasLogin = '#asientos';
+      mostrarAuth('login');
+      document.getElementById('acceso').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    btn.disabled = true;
+    try {
+      const mio = misReservas.get(a.id);
+      if (mio) {
+        const r = await apiAuth('/reservas/' + mio.bloqueoId + '/', { method: 'DELETE' });
+        if (r.ok || r.status === 404) { misReservas.delete(a.id); btn.classList.remove('selected', 'mine'); mensajeTicket('Reserva liberada.', 'ok'); }
+        else mensajeTicket((r.datos && r.datos.detail) || 'No se pudo liberar la reserva.', 'error');
+      } else {
+        const r = await apiAuth('/reservas/', { method: 'POST', body: JSON.stringify({ asiento_id: a.id }) });
+        if (r.ok) {
+          misReservas.set(a.id, { bloqueoId: r.datos.id, codigo: a.codigo, expira: Date.parse(r.datos.expira) });
+          btn.classList.add('selected', 'mine');
+          const min = Math.max(1, Math.round((Date.parse(r.datos.expira) - Date.now()) / 60000));
+          mensajeTicket('Asiento ' + a.codigo + ' reservado por ' + min + ' minutos.', 'ok');
+        } else {
+          mensajeTicket((r.datos && r.datos.detail) || 'No se pudo reservar el asiento.', 'error');
+          if (r.status === 409) await recargarAsientos();
+        }
+      }
+    } catch (e) {
+      mensajeTicket('No se pudo conectar con el servidor.', 'error');
+    } finally {
+      btn.disabled = false;
+      pintarPanel();
+    }
   }
 
   async function seleccionarEvento(evento, tarjeta) {
     eventoActivo = evento;
     document.querySelectorAll('.event-card').forEach(c => c.classList.remove('active'));
     if (tarjeta) tarjeta.classList.add('active');
-    document.getElementById('heroNombre').textContent = evento.nombre;
-    document.getElementById('heroFecha').textContent = formatearFecha(evento.fecha);
-    document.getElementById('heroLugar').textContent = evento.lugar;
     document.getElementById('eventLine').textContent = evento.nombre + ' · ' + evento.lugar;
 
+    mensajeTicket('');
     if (modoDemo) {
+      misReservas.clear();
       renderAsientos(demoAsientos(evento));
       return;
     }
     try {
       const r = await api('/eventos/' + evento.id + '/asientos/');
       if (!r.ok) throw new Error('HTTP ' + r.status);
+      await cargarMisReservas();
       renderAsientos(r.datos.asientos);
     } catch (e) {
       eventsMsg.textContent = 'No se pudieron cargar los asientos del evento.';
     }
   }
+
+  // ---------- Ilustraciones de los eventos (SVG original, sin imágenes externas) ----------
+  // Cada evento recibe una ilustración según su tema; los de ciclo Candlelight llevan velas.
+  const ILUS = (() => {
+    const estrellas = (n, color, semilla) => {
+      let s = '', x = semilla;
+      for (let i = 0; i < n; i++) {
+        x = (x * 9301 + 49297) % 233280; const a = x / 233280;
+        x = (x * 9301 + 49297) % 233280; const b = x / 233280;
+        s += `<circle cx="${(a * 400).toFixed(0)}" cy="${(b * 150).toFixed(0)}" r="${(0.8 + a * 1.6).toFixed(1)}" fill="${color}" opacity="${(0.4 + b * 0.6).toFixed(2)}"/>`;
+      }
+      return s;
+    };
+    const brillo = (x, y, r, c) => `<path d="M${x} ${y - r}Q${x} ${y} ${x + r} ${y}Q${x} ${y} ${x} ${y + r}Q${x} ${y} ${x - r} ${y}Q${x} ${y} ${x} ${y - r}Z" fill="${c}"/>`;
+    const estrella = (x, y, r, c) => {
+      let p = '';
+      for (let i = 0; i < 10; i++) { const rr = i % 2 ? r * 0.45 : r, an = Math.PI * i / 5 - Math.PI / 2; p += (i ? 'L' : 'M') + (x + rr * Math.cos(an)).toFixed(1) + ' ' + (y + rr * Math.sin(an)).toFixed(1); }
+      return `<path d="${p}Z" fill="${c}"/>`;
+    };
+    const nota = (x, y, c) => `<ellipse cx="${x}" cy="${y}" rx="9" ry="6.5" fill="${c}" transform="rotate(-20 ${x} ${y})"/><rect x="${x + 7}" y="${y - 34}" width="3" height="34" fill="${c}"/><path d="M${x + 10} ${y - 34}q14 4 12 16q-3 -8 -12 -8z" fill="${c}"/>`;
+    const velas = () => {
+      let s = '<rect x="0" y="168" width="400" height="32" fill="#000" opacity=".35"/>';
+      [30, 85, 140, 200, 260, 315, 370].forEach((x, i) => {
+        const h = 22 + (i * 7) % 12;
+        s += `<circle cx="${x}" cy="${178 - h}" r="16" fill="#ffb020" opacity=".25"/><rect x="${x - 6}" y="${190 - h}" width="12" height="${h}" rx="2" fill="#f7efe0"/><path d="M${x} ${171 - h}q-6 6 0 12q6 -6 0 -12z" fill="#ffb020"/>`;
+      });
+      return s;
+    };
+    const fondo = (a, b) => `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="400" height="200" fill="url(#g)"/>`;
+    const haz = (c) => `<polygon points="60,0 130,0 200,200 20,200" fill="${c}" opacity=".12"/><polygon points="270,0 340,0 380,200 200,200" fill="${c}" opacity=".12"/>`;
+    const guitarra = (c1, c2) => `<g transform="rotate(-28 200 105)"><rect x="193" y="-8" width="14" height="108" fill="#7a4a1f"/><rect x="188" y="-16" width="24" height="18" rx="3" fill="#2b1a0b"/><ellipse cx="200" cy="140" rx="46" ry="38" fill="${c1}"/><ellipse cx="200" cy="100" rx="32" ry="28" fill="${c1}"/><circle cx="200" cy="124" r="11" fill="#1a1a1a"/><rect x="186" y="150" width="28" height="6" rx="3" fill="${c2}"/><path d="M197 0V150M203 0V150" stroke="#ddd" stroke-width="1"/></g>`;
+    const motivos = {
+      queen: () => fondo('#1b0f3a', '#8a1fa2') + haz('#fff') + estrellas(40, '#fff', 7) + `<polygon points="145,128 155,66 180,98 200,56 220,98 245,66 255,128" fill="#ffb020"/><rect x="145" y="126" width="110" height="16" rx="3" fill="#e69a00"/><circle cx="155" cy="64" r="5" fill="#ff3b7f"/><circle cx="200" cy="54" r="6" fill="#ff3b7f"/><circle cx="245" cy="64" r="5" fill="#ff3b7f"/>`,
+      vivaldi: () => fondo('#0f2a3a', '#2d6a6a') + estrellas(18, '#fff', 3) +
+        `<g transform="translate(70 80)"><circle r="12" fill="#ff7ab6"/>${[0, 72, 144, 216, 288].map(a => `<ellipse cx="0" cy="-20" rx="8" ry="12" fill="#ff9ac8" transform="rotate(${a})"/>`).join('')}<circle r="7" fill="#ffd54a"/></g>` +
+        `<g transform="translate(160 80)"><circle r="16" fill="#ffd54a"/>${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<rect x="-2" y="-34" width="4" height="12" fill="#ffd54a" transform="rotate(${a})"/>`).join('')}</g>` +
+        `<path d="M250 58c28 4 36 30 20 52c-14 16-38 14-46-2c-8-18 4-44 26-50z" fill="#e0701b"/><path d="M248 60V118" stroke="#7a3a0b" stroke-width="3"/>` +
+        `<g transform="translate(340 82)" stroke="#e6f6ff" stroke-width="3" stroke-linecap="round">${[0, 60, 120].map(a => `<line x1="0" y1="-26" x2="0" y2="26" transform="rotate(${a})"/>`).join('')}</g>`,
+      coldplay: () => fondo('#0a1a5a', '#ff3b9a') + ['#ffd54a', '#4ade80', '#38bdf8', '#fff', '#ff7ab6'].map((c, i) => estrella(50 + i * 75, 40 + (i % 2) * 55, 14 + (i % 3) * 5, c)).join('') + `<circle cx="200" cy="105" r="46" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/><circle cx="200" cy="105" r="30" fill="none" stroke="#ffd54a" stroke-width="3"/>${estrella(200, 105, 20, '#fff')}` + estrellas(30, '#fff', 11),
+      ghibli: () => fondo('#6ec1ff', '#e2f6ff') + `<circle cx="310" cy="48" r="26" fill="#fff6c8"/>` + [[70, 50, 1], [190, 36, .8], [270, 82, .9]].map(([x, y, k]) => `<g fill="#fff" transform="translate(${x} ${y}) scale(${k})"><ellipse cx="0" cy="0" rx="40" ry="15"/><ellipse cx="-20" cy="-9" rx="22" ry="14"/><ellipse cx="16" cy="-12" rx="24" ry="16"/></g>`).join('') + `<path d="M0 150Q90 100 190 142T400 120V200H0Z" fill="#7bc96f"/><path d="M0 175Q120 130 240 170T400 160V200H0Z" fill="#4fa85a"/>`,
+      swift: () => fondo('#2a0f3a', '#ff7ab6') + estrellas(26, '#fff', 5) + brillo(70, 60, 22, '#fff') + brillo(330, 52, 18, '#ffd54a') + brillo(300, 120, 12, '#fff') + brillo(110, 120, 14, '#ffd54a') + `<path d="M200 128C140 90 150 52 188 60c8 2 12 8 12 8s4-6 12-8c38-8 48 30-12 68z" fill="#ff3b7f"/>`,
+      navidad: () => fondo('#0b2a1a', '#15532d') + estrellas(30, '#fff', 13) + `<polygon points="200,28 245,88 155,88" fill="#1f8a4c"/><polygon points="200,58 258,128 142,128" fill="#17753f"/><polygon points="200,88 270,162 130,162" fill="#0f6032"/><rect x="190" y="160" width="20" height="14" fill="#6b3d17"/>${estrella(200, 26, 13, '#ffd54a')}` + [[185, 78, '#ff3b7f'], [215, 110, '#ffd54a'], [172, 140, '#38bdf8'], [230, 146, '#ff3b7f'], [196, 112, '#fff']].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="5" fill="${c}"/>`).join(''),
+      abba: () => fondo('#3a0a4a', '#ffb020') + `<circle cx="200" cy="92" r="52" fill="#d9d9e8"/>` + [-40, -20, 0, 20, 40].map(d => `<line x1="${200 + d}" y1="42" x2="${200 + d}" y2="142" stroke="#8a8aa8" stroke-width="2"/>`).join('') + [62, 82, 102, 122].map(y => `<line x1="150" y1="${y}" x2="250" y2="${y}" stroke="#8a8aa8" stroke-width="2"/>`).join('') + `<rect x="198" y="30" width="4" height="12" fill="#ddd"/>` + [[60, 40], [340, 50], [80, 130], [330, 120]].map(([x, y]) => brillo(x, y, 14, '#fff')).join(''),
+      indie: () => fondo('#ff7a3a', '#ff3b7f') + `<circle cx="300" cy="70" r="34" fill="#ffd54a" opacity=".9"/><path d="M0 40Q200 90 400 40" stroke="#fff" stroke-width="2" fill="none"/>` + ['#38bdf8', '#ffd54a', '#4ade80', '#fff', '#ff3b7f', '#38bdf8'].map((c, i) => `<polygon points="${30 + i * 62},${58 + 8 * Math.sin(i)} ${60 + i * 62},${58 + 8 * Math.sin(i)} ${45 + i * 62},${86 + 8 * Math.sin(i)}" fill="${c}"/>`).join('') + `<path d="M0 170Q120 130 250 165T400 150V200H0Z" fill="#2a1a3a"/><polygon points="130,172 185,100 240,172" fill="#fff3d6"/><polygon points="185,100 200,172 170,172" fill="#e0b46a"/>`,
+      jazz: () => fondo('#0a1030', '#1d4ed8') + estrellas(50, '#fff', 17) + `<circle cx="300" cy="62" r="30" fill="#fff6c8"/><circle cx="312" cy="56" r="26" fill="#14308a" opacity=".9"/>` + nota(110, 124, '#ffd54a') + nota(190, 100, '#fff') + nota(250, 134, '#ffd54a'),
+      salsa: () => fondo('#7a0a0a', '#ff7a1a') + `<path d="M150 70H250L238 160Q200 172 162 160Z" fill="#8a3a14"/><ellipse cx="200" cy="70" rx="50" ry="12" fill="#f2d4a0"/><path d="M158 100Q200 112 242 100M162 130Q200 142 238 130" stroke="#ffd54a" stroke-width="4" fill="none"/>` + nota(80, 110, '#ffd54a') + nota(320, 120, '#fff') + brillo(300, 40, 14, '#ffd54a') + brillo(90, 44, 12, '#fff'),
+      beethoven: () => fondo('#16161c', '#4a4a5c') + `<rect x="40" y="70" width="320" height="86" rx="4" fill="#f4f4f4"/>` + Array.from({ length: 15 }, (_, i) => `<line x1="${40 + i * 21.3}" y1="70" x2="${40 + i * 21.3}" y2="156" stroke="#aaa"/>`).join('') + [0, 1, 3, 4, 5, 7, 8, 10, 11, 12].map(i => `<rect x="${40 + i * 21.3 + 14}" y="70" width="14" height="52" fill="#111"/>`).join('') + nota(90, 50, '#ffb020') + nota(300, 46, '#ffb020') + estrellas(14, '#fff', 4),
+      rock: () => fondo('#2a0a3a', '#ff3b7f') + haz('#fff') + estrellas(20, '#fff', 21) + guitarra('#ffb020', '#c47a00'),
+      escenario: () => fondo('#1a1a2e', '#ff3b7f') + haz('#fff') + `<path d="M0 0H70Q50 100 0 190Z" fill="#8a1020"/><path d="M400 0H330Q350 100 400 190Z" fill="#8a1020"/><ellipse cx="200" cy="168" rx="130" ry="14" fill="#fff" opacity=".18"/>` + estrellas(24, '#fff', 9),
+    };
+    const sinAcentos = t => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const reglas = [['queen', /queen/], ['vivaldi', /vivaldi|estaciones/], ['coldplay', /coldplay/], ['ghibli', /ghibli/], ['swift', /swift|taylor/], ['navidad', /navidad/], ['abba', /abba/], ['indie', /indie/], ['jazz', /jazz/], ['salsa', /salsa/], ['beethoven', /beethoven|filarmon/], ['rock', /rock/]];
+    return function (nombre) {
+      const n = sinAcentos(nombre);
+      const clave = (reglas.find(([, re]) => re.test(n)) || ['escenario'])[0];
+      const velasTxt = /candlelight/.test(n) ? velas() : '';
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">${motivos[clave]()}${velasTxt}</svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    };
+  })();
 
   // ---------- Eventos ----------
   const filtersEl = document.getElementById('filters');
@@ -519,6 +770,11 @@
       card.className = 'event-card';
       card.dataset.id = ev.id;
 
+      const img = document.createElement('img');
+      img.className = 'event-img';
+      img.src = ILUS(ev.nombre);
+      img.alt = 'Ilustración del evento ' + ev.nombre;
+      img.loading = 'lazy';
       const tag = document.createElement('span');
       tag.className = 'tag';
       tag.textContent = categoria(ev);
@@ -539,7 +795,7 @@
         document.getElementById('seatMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
 
-      card.append(tag, h, f, l, d, b);
+      card.append(img, tag, h, f, l, d, b);
       eventsGrid.appendChild(card);
       if (i === 0 && !eventoActivo) seleccionarEvento(ev, card);
       if (eventoActivo && eventoActivo.id === ev.id) card.classList.add('active');
@@ -624,9 +880,15 @@
       if (r.ok) {
         formMsg.className = 'form-msg ok';
         formMsg.textContent = 'Cuenta creada para ' + r.datos.nombre + '. Ya puedes iniciar sesión.';
+        const correoNuevo = r.datos.email;
         form.reset();
         CAMPOS.forEach(c => mostrarError(c, ''));
         cargarEstadoBD();
+        mostrarAuth('login'); // el registro y el inicio de sesión son vistas separadas
+        document.getElementById('loginEmail').value = correoNuevo;
+        loginMsg.className = 'form-msg ok';
+        loginMsg.textContent = 'Cuenta creada. Ingresa tu contraseña para iniciar sesión.';
+        document.getElementById('loginPassword').focus();
       } else if (r.status === 400 && r.datos) {
         Object.entries(r.datos).forEach(([campo, msgs]) => {
           const destino = campo === 'password' ? 'password' : campo;
@@ -654,6 +916,10 @@
   const navRegistro = document.getElementById('navRegistro');
   const navLogout = document.getElementById('navLogout');
   let usuarioActual = null;
+  let destinoTrasLogin = null;
+  const perfilSec = document.getElementById('perfil');
+  const accesoSec = document.getElementById('acceso');
+  const adminSec = document.getElementById('admin');
 
   function guardarSesion(u) {
     try { u ? sessionStorage.setItem('ticketlock_usuario', JSON.stringify(u)) : sessionStorage.removeItem('ticketlock_usuario'); } catch (e) { /* sin almacenamiento */ }
@@ -668,7 +934,52 @@
     navLogin.hidden = dentro;
     navRegistro.hidden = dentro;
     if (dentro) document.getElementById('userName').textContent = usuarioActual.nombre;
+    const esAdmin = dentro && usuarioActual.rol === 'ADMIN';
+    perfilSec.hidden = !dentro || modoDemo;
+    document.getElementById('liPerfil').hidden = perfilSec.hidden;
+    accesoSec.hidden = dentro && !modoDemo; // con sesión iniciada ya no se muestran los formularios de acceso
+    document.getElementById('liCuenta').hidden = accesoSec.hidden;
+    if (dentro) {
+      document.getElementById('pfNombre').value = usuarioActual.nombre || '';
+      document.getElementById('pfEmail').value = usuarioActual.email || '';
+    }
+    adminSec.hidden = !esAdmin || modoDemo;
+    document.getElementById('liAdmin').hidden = adminSec.hidden;
   }
+
+  async function iniciarDatosDeSesion() {
+    await cargarMisReservas();
+    cargarCompras();
+    cargarAdmin();
+    recargarAsientos();
+  }
+
+  function cerrarSesion(mensaje) {
+    usuarioActual = null;
+    guardarSesion(null);
+    misReservas.clear();
+    pintarSesion();
+    pintarPanel();
+    loginMsg.className = 'form-msg';
+    loginMsg.textContent = mensaje || 'Sesión cerrada.';
+    mostrarAuth('login');
+    recargarAsientos();
+    if (location.hash === '#perfil' || location.hash === '#admin') location.hash = '#inicio';
+  }
+
+  // ---------- Inicio de sesión y registro: una sola vista a la vez ----------
+  function mostrarAuth(cual) {
+    document.getElementById('login').hidden = cual !== 'login';
+    document.getElementById('registro').hidden = cual !== 'registro';
+  }
+  function sincronizarAuthConHash() {
+    if (location.hash === '#login' || location.hash === '#registro') {
+      mostrarAuth(location.hash.slice(1));
+      const el = document.getElementById(location.hash.slice(1));
+      if (el && !accesoSec.hidden) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+  window.addEventListener('hashchange', sincronizarAuthConHash);
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -700,6 +1011,14 @@
         loginForm.reset();
         loginMsg.className = 'form-msg ok';
         loginMsg.textContent = 'Sesión iniciada. Bienvenido/a, ' + r.datos.nombre + '.';
+        iniciarDatosDeSesion();
+        const destino = destinoTrasLogin || '#perfil';
+        destinoTrasLogin = null;
+        setTimeout(() => { const el = document.querySelector(destino); if (el && el.offsetParent !== null) el.scrollIntoView({ behavior: 'smooth' }); }, 150);
+        if (destino === '#perfil') {
+          perfilMsg.className = 'form-msg ok';
+          perfilMsg.textContent = 'Sesión iniciada. Bienvenido/a, ' + r.datos.nombre + '.';
+        }
       } else if (r.status === 401 || r.status === 400) {
         loginMsg.className = 'form-msg error';
         loginMsg.textContent = (r.datos && r.datos.detail) || 'Revisa los datos ingresados.';
@@ -715,47 +1034,244 @@
     }
   });
 
-  navLogout.addEventListener('click', () => {
-    usuarioActual = null;
-    guardarSesion(null);
-    pintarSesion();
-    loginMsg.className = 'form-msg';
-    loginMsg.textContent = 'Sesión cerrada.';
-  });
+  navLogout.addEventListener('click', () => cerrarSesion('Sesión cerrada.'));
 
   usuarioActual = leerSesion();
   pintarSesion();
+  pintarPanel();
+  sincronizarAuthConHash();
 
-  // ---------- Confirmación (se conectará en la siguiente entrega) ----------
-  confirmBtn.addEventListener('click', () => {
-    if (!selected) return;
-    if (!usuarioActual && !modoDemo) {
-      alert('Inicia sesión para continuar con la compra.');
-      location.hash = '#login';
+  // ---------- Confirmación de la compra (transacción en el servidor) ----------
+  confirmBtn.addEventListener('click', async () => {
+    if (!misReservas.size) return;
+    if (modoDemo) {
+      mensajeTicket('Modo demostración: la compra no se registra. Ejecuta el backend para comprar de verdad.', 'error');
       return;
     }
-    alert('Vista previa de interfaz: aquí se conectará la confirmación transaccional (COMMIT) en una próxima entrega.');
+    if (!usuarioActual) { mensajeTicket('Inicia sesión para continuar con la compra.', 'error'); return; }
+    confirmBtn.disabled = true;
+    mensajeTicket('Procesando la compra…');
+    try {
+      const r = await apiAuth('/compras/', { method: 'POST', body: JSON.stringify({ asiento_ids: [...misReservas.keys()] }) });
+      if (r.ok) {
+        misReservas.clear();
+        mensajeTicket('¡Compra confirmada! ' + r.datos.boletos.length + ' boleto(s), total ' + fmtCOP(Number(r.datos.total)) +
+          '. Código ' + r.datos.id.slice(0, 8).toUpperCase() + '.', 'ok');
+        await recargarAsientos();
+        cargarCompras();
+        cargarEstadoBD();
+      } else {
+        mensajeTicket((r.datos && r.datos.detail) || 'No se pudo confirmar la compra.', 'error');
+        await recargarAsientos();
+      }
+    } catch (e) {
+      mensajeTicket('No se pudo conectar con el servidor. Tu reserva sigue vigente unos minutos.', 'error');
+    } finally {
+      pintarPanel();
+    }
   });
 
-  // ---------- Temporizador visual ----------
-  let seconds = 299;
-  const clockEl = document.getElementById('clock');
-  setInterval(() => {
-    if (seconds <= 0) return;
-    seconds--;
-    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const s = String(seconds % 60).padStart(2, '0');
-    clockEl.textContent = `${m}:${s}`;
+  // ---------- Temporizador real de la reserva ----------
+  setInterval(async () => {
+    const resto = pintarReloj();
+    if (resto === 0 && misReservas.size) {
+      misReservas.clear();
+      mensajeTicket('Tu reserva expiró y los asientos quedaron libres.', 'error');
+      await recargarAsientos();
+      pintarPanel();
+    }
   }, 1000);
+  // Refresca el mapa para ver lo que reservan o compran otras personas.
+  setInterval(() => { if (!document.hidden) recargarAsientos(); }, 15000);
+
+  // ---------- Perfil: próximas entradas, historial y datos personales ----------
+  const perfilMsg = document.getElementById('perfilMsg');
+  const passMsg = document.getElementById('passMsg');
+
+  function mostrarPestana(nombre) {
+    ['Datos', 'Proximas', 'Historial'].forEach(n => {
+      document.getElementById('tab' + n).hidden = n !== nombre;
+      document.getElementById('tabBtn' + n).setAttribute('aria-selected', String(n === nombre));
+    });
+  }
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => mostrarPestana(b.dataset.tab)));
+
+  function vacio(cont, texto) {
+    const p = document.createElement('p'); p.className = 'msg'; p.textContent = texto;
+    cont.replaceChildren(p);
+  }
+
+  async function cargarCompras() {
+    if (modoDemo || !usuarioActual) return;
+    try {
+      const r = await apiAuth('/compras/');
+      if (!r.ok) return;
+      renderHistorial(r.datos);
+      renderProximas(r.datos);
+    } catch (e) { /* sin conexión */ }
+  }
+
+  function renderHistorial(compras) {
+    const cont = document.getElementById('comprasList');
+    if (!compras.length) { vacio(cont, 'Aún no has comprado boletos.'); return; }
+    cont.replaceChildren();
+    compras.forEach(c => {
+      const box = document.createElement('div'); box.className = 'compra';
+      const h = document.createElement('h3');
+      h.textContent = c.boletos.length ? c.boletos[0].evento : 'Compra';
+      const meta = document.createElement('div'); meta.className = 'meta';
+      meta.textContent = formatearFecha(c.fecha) + ' · Total ' + fmtCOP(Number(c.total)) + ' · Código ' + c.id.slice(0, 8).toUpperCase();
+      const ul = document.createElement('ul'); ul.className = 'boletos';
+      c.boletos.forEach(b => { const li = document.createElement('li'); li.textContent = b.codigo; ul.appendChild(li); });
+      box.append(h, meta, ul); cont.appendChild(box);
+    });
+  }
+
+  // Entradas de los eventos que aún no han ocurrido, del más cercano al más lejano.
+  function renderProximas(compras) {
+    const cont = document.getElementById('proximasList');
+    const ahora = Date.now();
+    const entradas = [];
+    compras.forEach(c => c.boletos.forEach(b => {
+      if (Date.parse(b.fecha_evento) >= ahora) entradas.push({ b, codigoCompra: c.id.slice(0, 8).toUpperCase() });
+    }));
+    entradas.sort((x, y) => Date.parse(x.b.fecha_evento) - Date.parse(y.b.fecha_evento));
+    if (!entradas.length) { vacio(cont, 'No tienes entradas para próximos eventos. Reserva y compra tus asientos en la sección Eventos.'); return; }
+    cont.replaceChildren();
+    entradas.forEach(({ b, codigoCompra }) => {
+      const fila = document.createElement('div'); fila.className = 'entrada';
+      const img = document.createElement('img'); img.src = ILUS(b.evento); img.alt = 'Ilustración del evento ' + b.evento;
+      const info = document.createElement('div'); info.className = 'info';
+      const h = document.createElement('h3'); h.textContent = b.evento;
+      const f = document.createElement('div'); f.className = 'meta'; f.textContent = formatearFecha(b.fecha_evento);
+      const l = document.createElement('div'); l.className = 'meta'; l.textContent = b.lugar;
+      const dias = Math.max(0, Math.ceil((Date.parse(b.fecha_evento) - ahora) / 86400000));
+      const fa = document.createElement('div'); fa.className = 'faltan';
+      fa.textContent = dias === 0 ? 'Es hoy' : dias === 1 ? 'Falta 1 día' : 'Faltan ' + dias + ' días';
+      const a = document.createElement('span'); a.className = 'asiento';
+      a.textContent = 'Asiento ' + b.codigo + ' · Compra ' + codigoCompra;
+      info.append(h, f, l, fa, a); fila.append(img, info); cont.appendChild(fila);
+    });
+  }
+
+  function textoError(datos, defecto) {
+    if (!datos) return defecto;
+    if (datos.detail) return datos.detail;
+    const primero = Object.values(datos).flat()[0];
+    return primero || defecto;
+  }
+
+  document.getElementById('perfilForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById('pfNombre').value.trim();
+    const email = document.getElementById('pfEmail').value.trim();
+    perfilMsg.className = 'form-msg error';
+    if (nombre.length < 2) { perfilMsg.textContent = 'El nombre debe tener al menos 2 caracteres.'; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { perfilMsg.textContent = 'Ingresa un correo válido.'; return; }
+    try {
+      const r = await apiAuth('/perfil/', { method: 'PATCH', body: JSON.stringify({ nombre, email }) });
+      if (r.ok) {
+        usuarioActual = Object.assign({}, usuarioActual, r.datos); // se conserva el token
+        guardarSesion(usuarioActual);
+        pintarSesion();
+        perfilMsg.className = 'form-msg ok';
+        perfilMsg.textContent = 'Datos actualizados.';
+      } else {
+        perfilMsg.textContent = textoError(r.datos, 'No se pudo guardar el perfil.');
+      }
+    } catch (err) { perfilMsg.textContent = 'No se pudo conectar con el servidor.'; }
+  });
+
+  document.getElementById('passForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const actual = document.getElementById('pfActual').value;
+    const nueva = document.getElementById('pfNueva').value;
+    const nueva2 = document.getElementById('pfNueva2').value;
+    passMsg.className = 'form-msg error';
+    if (!actual) { passMsg.textContent = 'Ingresa tu contraseña actual.'; return; }
+    if (nueva.length < 8 || !/[A-Za-z]/.test(nueva) || !/\d/.test(nueva)) { passMsg.textContent = 'La contraseña nueva debe tener 8 caracteres, con al menos una letra y un número.'; return; }
+    if (nueva !== nueva2) { passMsg.textContent = 'Las contraseñas nuevas no coinciden.'; return; }
+    try {
+      const r = await apiAuth('/perfil/', { method: 'PATCH', body: JSON.stringify({ password_actual: actual, password_nueva: nueva }) });
+      if (r.ok) {
+        e.target.reset();
+        passMsg.className = 'form-msg ok';
+        passMsg.textContent = 'Contraseña actualizada.';
+      } else {
+        passMsg.textContent = textoError(r.datos, 'No se pudo cambiar la contraseña.');
+      }
+    } catch (err) { passMsg.textContent = 'No se pudo conectar con el servidor.'; }
+  });
+
+  // ---------- Administración (solo rol ADMIN) ----------
+  const adminMsg = document.getElementById('adminMsg');
+  async function cargarAdmin() {
+    if (modoDemo || !usuarioActual || usuarioActual.rol !== 'ADMIN') return;
+    try {
+      const [ev, au] = await Promise.all([apiAuth('/admin/eventos/'), apiAuth('/admin/auditoria/')]);
+      if (ev.ok) {
+        const cont = document.getElementById('adminEventos'); cont.replaceChildren();
+        ev.datos.forEach(e => {
+          const fila = document.createElement('div'); fila.className = 'admin-row';
+          const n = document.createElement('span'); n.className = 'nombre'; n.textContent = e.nombre;
+          const st = document.createElement('span'); st.className = 'estado'; st.textContent = e.estado;
+          fila.append(n, st);
+          ['PUBLICADO', 'CERRADO', 'CANCELADO'].filter(x => x !== e.estado).forEach(nuevo => {
+            const b = document.createElement('button'); b.type = 'button';
+            b.textContent = { PUBLICADO: 'Publicar', CERRADO: 'Cerrar', CANCELADO: 'Cancelar' }[nuevo];
+            b.addEventListener('click', async () => {
+              const r = await apiAuth('/admin/eventos/' + e.id + '/', { method: 'PATCH', body: JSON.stringify({ estado: nuevo }) });
+              adminMsg.className = 'form-msg ' + (r.ok ? 'ok' : 'error');
+              adminMsg.textContent = r.ok ? 'Estado actualizado.' : ((r.datos && r.datos.detail) || 'No se pudo actualizar.');
+              cargarAdmin(); cargarEventos();
+            });
+            fila.appendChild(b);
+          });
+          cont.appendChild(fila);
+        });
+      }
+      if (au.ok) {
+        const tb = document.getElementById('auditBody'); tb.replaceChildren();
+        au.datos.forEach(a => {
+          const tr = document.createElement('tr');
+          [new Date(a.fecha_hora).toLocaleString('es-CO'), a.accion, a.recurso, a.resultado].forEach(t => {
+            const td = document.createElement('td'); td.textContent = t; tr.appendChild(td);
+          });
+          tb.appendChild(tr);
+        });
+      }
+    } catch (e) { /* sin conexión */ }
+  }
+
+  document.getElementById('adminForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById('adNombre').value.trim();
+    const lugar = document.getElementById('adLugar').value.trim();
+    const fecha = document.getElementById('adFecha').value;
+    const filas = Number(document.getElementById('adFilas').value);
+    const columnas = Number(document.getElementById('adCols').value);
+    adminMsg.className = 'form-msg error';
+    if (nombre.length < 3 || lugar.length < 2 || !fecha) { adminMsg.textContent = 'Completa nombre, lugar y fecha.'; return; }
+    if (!(filas >= 1 && filas <= 10 && columnas >= 1 && columnas <= 20)) { adminMsg.textContent = 'Filas de 1 a 10 y columnas de 1 a 20.'; return; }
+    const r = await apiAuth('/admin/eventos/', { method: 'POST', body: JSON.stringify({ nombre, lugar, fecha: new Date(fecha).toISOString(), filas, columnas }) });
+    if (r.ok) {
+      adminMsg.className = 'form-msg ok';
+      adminMsg.textContent = 'Evento creado con ' + (filas * columnas) + ' asientos.';
+      e.target.reset(); document.getElementById('adFilas').value = 4; document.getElementById('adCols').value = 10;
+      cargarAdmin(); cargarEventos(); cargarEstadoBD();
+    } else {
+      adminMsg.textContent = (r.datos && (r.datos.detail || Object.values(r.datos).flat().join(' '))) || 'No se pudo crear el evento.';
+    }
+  });
 
   // ---------- Navegación: sección activa y botón "Volver al inicio" ----------
   const enlaces = [...document.querySelectorAll('nav ul a')];
   const secciones = enlaces.map(a => document.querySelector(a.getAttribute('href')));
   const toTop = document.getElementById('toTop');
   function actualizarNavegacion() {
-    const y = window.scrollY + 140;
+    const y = window.scrollY + 230;
     let activo = 0;
-    secciones.forEach((sec, i) => { if (sec && sec.getBoundingClientRect().top + window.scrollY <= y) activo = i; });
+    secciones.forEach((sec, i) => { if (sec && sec.offsetParent !== null && sec.getBoundingClientRect().top + window.scrollY <= y) activo = i; });
     enlaces.forEach((a, i) => a.classList.toggle('active', i === activo));
     toTop.hidden = window.scrollY < 600;
   }
@@ -763,7 +1279,7 @@
   toTop.addEventListener('click', () => { location.hash = '#inicio'; window.scrollTo({ top: 0 }); });
   actualizarNavegacion();
 
-  cargarEventos();
+  cargarEventos().then(() => { pintarSesion(); if (usuarioActual && !modoDemo) iniciarDatosDeSesion(); });
 </script>
 
 </body>
