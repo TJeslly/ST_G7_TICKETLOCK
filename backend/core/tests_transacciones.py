@@ -24,6 +24,12 @@ def cabecera(usuario):
     return {"HTTP_AUTHORIZATION": f"Bearer {auth.crear_token(usuario)}"}
 
 
+def pago_ok(numero="4242 4242 4242 4242"):
+    """Datos de tarjeta FICTICIA aprobada por la pasarela simulada."""
+    anio = (timezone.now().year + 3) % 100
+    return {"numero": numero, "titular": "Ana Prueba", "vencimiento": f"12/{anio:02d}", "cvv": "123"}
+
+
 def post(client, url, datos, usuario=None):
     extra = cabecera(usuario) if usuario else {}
     return client.post(url, datos, content_type="application/json", **extra)
@@ -144,7 +150,7 @@ class CompraTests(TestCase):
             )
 
     def comprar(self, usuario, *indices):
-        return post(self.client, "/api/compras/", {"asiento_ids": [str(self.asientos[i].id) for i in indices]}, usuario)
+        return post(self.client, "/api/compras/", {"asiento_ids": [str(self.asientos[i].id) for i in indices], "pago": pago_ok()}, usuario)
 
     def test_compra_confirma_todo_en_una_transaccion(self):
         self.reservar(self.ana, 0, 1)
@@ -200,8 +206,116 @@ class CompraTests(TestCase):
         self.assertEqual(self.client.get("/api/compras/", **cabecera(self.luis)).json(), [])
 
     def test_mas_de_cuatro_boletos_se_rechaza(self):
-        r = post(self.client, "/api/compras/", {"asiento_ids": [str(a.id) for a in self.asientos[:5]]}, self.ana)
+        r = post(self.client, "/api/compras/", {"asiento_ids": [str(a.id) for a in self.asientos[:5]], "pago": pago_ok()}, self.ana)
         self.assertEqual(r.status_code, 400)
+
+
+class PagoSimuladoTests(TestCase):
+    """Pasarela de pago simulada: validación de la tarjeta, rechazos y privacidad."""
+
+    def setUp(self):
+        self.ana = crear_usuario()
+        self.ev, self.asientos = crear_evento(4)
+        self.id0 = str(self.asientos[0].id)
+
+    def reservar(self):
+        self.assertEqual(post(self.client, "/api/reservas/", {"asiento_id": self.id0}, self.ana).status_code, 201)
+
+    def pagar(self, **cambios):
+        pago = pago_ok()
+        pago.update(cambios)
+        return post(self.client, "/api/compras/", {"asiento_ids": [self.id0], "pago": pago}, self.ana)
+
+    def test_sin_datos_de_pago_no_hay_compra(self):
+        self.reservar()
+        r = post(self.client, "/api/compras/", {"asiento_ids": [self.id0]}, self.ana)
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("pago", r.json())
+        self.assertEqual(SolicitudCompra.objects.count(), 0)
+
+    def test_tarjeta_aprobada_devuelve_comprobante(self):
+        self.reservar()
+        r = self.pagar()
+        self.assertEqual(r.status_code, 201)
+        pago = r.json()["pago"]
+        self.assertEqual((pago["estado"], pago["marca"], pago["ultimos4"]), ("APROBADO", "Visa", "4242"))
+        self.assertTrue(pago["autorizacion"].startswith("SIM-"))
+        self.assertTrue(pago["simulado"])
+        self.assertEqual(pago["monto"], "180000.00")
+
+    def test_el_comprobante_no_contiene_numero_completo_ni_cvv(self):
+        self.reservar()
+        texto = self.pagar().content.decode()
+        self.assertNotIn("4242424242424242", texto)
+        self.assertNotIn("4242 4242 4242 4242", texto)
+        self.assertNotIn('"cvv"', texto)
+
+    def test_rechazo_del_banco_conserva_la_reserva(self):
+        self.reservar()
+        r = self.pagar(numero="4000 0000 0000 0002")
+        self.assertEqual(r.status_code, 402)
+        self.assertIn("banco emisor", r.json()["detail"])
+        self.assertEqual(SolicitudCompra.objects.count(), 0)
+        self.asientos[0].refresh_from_db()
+        self.assertEqual(self.asientos[0].estado, "BLOQUEADO")
+        self.assertTrue(Bloqueo.objects.filter(asiento=self.asientos[0], estado="ACTIVO", usuario=self.ana).exists())
+        self.assertTrue(Auditoria.objects.filter(accion="CONFIRMAR_COMPRA", resultado="DENIED").exists())
+
+    def test_fondos_insuficientes_y_reintento_con_otra_tarjeta(self):
+        self.reservar()
+        r = self.pagar(numero="4000000000009995")
+        self.assertEqual(r.status_code, 402)
+        self.assertIn("Fondos insuficientes", r.json()["detail"])
+        r2 = self.pagar()  # la misma reserva sigue vigente: se puede reintentar
+        self.assertEqual(r2.status_code, 201)
+        self.assertEqual(SolicitudCompra.objects.count(), 1)
+
+    def test_numero_con_digito_mal_digitado_se_rechaza_por_luhn(self):
+        self.reservar()
+        r = self.pagar(numero="4242 4242 4242 4243")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("numero", r.json()["pago"])
+        self.assertEqual(SolicitudCompra.objects.count(), 0)
+
+    def test_tarjeta_vencida_formato_y_cvv_invalidos(self):
+        self.reservar()
+        self.assertIn("vencimiento", self.pagar(vencimiento="01/20").json()["pago"])
+        self.assertIn("vencimiento", self.pagar(vencimiento="13/30").json()["pago"])
+        self.assertIn("vencimiento", self.pagar(vencimiento="1230").json()["pago"])
+        self.assertIn("cvv", self.pagar(cvv="12").json()["pago"])
+        self.assertIn("cvv", self.pagar(cvv="12a").json()["pago"])
+        self.assertIn("titular", self.pagar(titular="A").json()["pago"])
+        self.assertEqual(SolicitudCompra.objects.count(), 0)
+
+    def test_otra_tarjeta_valida_se_aprueba_y_se_detecta_la_marca(self):
+        self.reservar()
+        r = self.pagar(numero="5555 5555 5555 4444")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.json()["pago"]["marca"], "Mastercard")
+
+    def test_los_datos_de_tarjeta_no_se_guardan_en_la_base(self):
+        self.reservar()
+        self.assertEqual(self.pagar().status_code, 201)
+        volcado = " ".join(
+            str(v) for modelo in (SolicitudCompra, DetalleCompra, Auditoria, Bloqueo, Usuario)
+            for fila in modelo.objects.values() for v in fila.values()
+        )
+        self.assertNotIn("4242", volcado)
+        self.assertNotIn("Ana Prueba", volcado)
+
+    def test_repetir_la_peticion_no_vuelve_a_cobrar(self):
+        self.reservar()
+        self.assertEqual(self.pagar().status_code, 201)
+        r = self.pagar(numero="4000 0000 0000 0002")  # ya estaba pagada: respuesta idempotente
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["ya_procesada"])
+        self.assertNotIn("pago", r.json())
+        self.assertEqual(SolicitudCompra.objects.count(), 1)
+
+    def test_pagar_sin_reserva_no_autoriza_nada(self):
+        r = self.pagar()  # no reservó: se rechaza antes de tocar la pasarela
+        self.assertEqual(r.status_code, 409)
+        self.assertEqual(SolicitudCompra.objects.count(), 0)
 
 
 class AdminTests(TestCase):
@@ -280,7 +394,7 @@ class ConcurrenciaTests(TransactionTestCase):
 
         def comprar():
             try:
-                _, creada = services.comprar(ana, [str(asientos[0].id)])
+                _, creada, _ = services.comprar(ana, [str(asientos[0].id)], pago_ok())
                 return "creada" if creada else "repetida"
             except services.ErrorNegocio:
                 return "rechazada"
@@ -302,7 +416,7 @@ class ConcurrenciaTests(TransactionTestCase):
         def comprar(u, ids):
             def f():
                 try:
-                    services.comprar(u, [str(i) for i in ids])
+                    services.comprar(u, [str(i) for i in ids], pago_ok())
                     return "ok"
                 except services.ErrorNegocio:
                     return "rechazada"
