@@ -155,7 +155,15 @@ class PagoSerializer(serializers.Serializer):
 
 
 class CompraInSerializer(serializers.Serializer):
-    asiento_ids = serializers.ListField(child=serializers.UUIDField(), min_length=1, max_length=4)
+    asiento_ids = serializers.ListField(
+        child=serializers.UUIDField(error_messages={"invalid": "Identificador de asiento no válido."}),
+        min_length=1, max_length=4,
+        error_messages={
+            "required": "Selecciona al menos un asiento.", "empty": "Selecciona al menos un asiento.",
+            "min_length": "Selecciona al menos un asiento (tu reserva pudo haber expirado).",
+            "max_length": "Máximo 4 boletos por compra.", "not_a_list": "Formato de asientos no válido.",
+        },
+    )
     pago = PagoSerializer(error_messages={"required": "Ingresa los datos de pago para confirmar la compra."})
 
 

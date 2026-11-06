@@ -230,6 +230,8 @@
   .pago-resumen strong{ display:block; font-size:15px; margin-bottom:2px; }
   .pago-resumen .fila{ display:flex; justify-content:space-between; color:var(--text-dim); margin-top:2px; }
   .pago-resumen .total{ color:var(--text); font-weight:700; font-size:15px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line); }
+  .pago-reloj{ font-size:12.5px; color:var(--amber); font-weight:600; margin:-6px 0 12px; }
+  .pago-reloj.vencida{ color:#F87171; }
   .pago-campo{ margin-bottom:12px; }
   .pago-campo label{ display:block; font-size:12.5px; color:var(--text-dim); margin-bottom:5px; font-weight:600; }
   .pago-campo input{ width:100%; background:#14171b; border:1px solid var(--line); color:var(--text); border-radius:8px; padding:11px 12px; font-size:15px; font-family:'Inter',sans-serif; }
@@ -237,9 +239,6 @@
   .pago-campo input.invalido{ border-color:#EF4444; }
   .pago-campo .marca{ float:right; color:var(--accent); font-weight:700; }
   .pago-fila{ display:flex; gap:12px; } .pago-fila .pago-campo{ flex:1; }
-  .pago-pruebas{ font-size:12px; color:var(--text-dim); margin:2px 0 14px; }
-  .pago-pruebas button{ background:#14171b; border:1px solid var(--line); color:var(--text); border-radius:6px; padding:4px 9px; font-size:12px; cursor:pointer; margin:4px 6px 0 0; font-family:'Inter',sans-serif; }
-  .pago-pruebas button:hover{ border-color: var(--accent); }
   .pago-error{ color:#F87171; font-size:13px; margin:0 0 12px; min-height:0; }
   .pago-error:empty{ display:none; }
   .pago-acciones{ display:flex; gap:10px; }
@@ -479,6 +478,7 @@
     <form id="pagoForm" novalidate autocomplete="off">
       <div class="pago-aviso">🔒 Simulador académico: usa datos ficticios. No ingreses tu tarjeta real; nada se guarda ni se cobra.</div>
       <div class="pago-resumen" id="pagoResumen"></div>
+      <div class="pago-reloj" id="pagoReloj"></div>
       <div class="pago-campo"><label for="pgNumero">Número de tarjeta <span class="marca" id="pgMarca"></span></label>
         <input id="pgNumero" inputmode="numeric" maxlength="23" placeholder="4242 4242 4242 4242" autocomplete="off"></div>
       <div class="pago-campo"><label for="pgTitular">Titular</label>
@@ -487,8 +487,6 @@
         <div class="pago-campo"><label for="pgVence">Vencimiento (MM/AA)</label><input id="pgVence" inputmode="numeric" maxlength="5" placeholder="08/29" autocomplete="off"></div>
         <div class="pago-campo"><label for="pgCvv">CVV</label><input id="pgCvv" inputmode="numeric" maxlength="4" placeholder="123" autocomplete="off"></div>
       </div>
-      <div class="pago-pruebas">Tarjetas de prueba (clic para llenar):
-        <div><button type="button" data-num="4242424242424242">✔ Aprobada</button><button type="button" data-num="4000000000000002">✖ Rechazada por el banco</button><button type="button" data-num="4000000000009995">✖ Fondos insuficientes</button></div></div>
       <p class="pago-error" id="pagoError" role="alert"></p>
       <div class="pago-acciones"><button type="button" class="btn-sec" id="pagoCancelar">Cancelar</button><button type="submit" class="btn-confirm" id="pagoPagar">Pagar</button></div>
     </form>
@@ -1064,6 +1062,17 @@
     }
   }
   window.addEventListener('hashchange', sincronizarAuthConHash);
+  // Los enlaces «Crear cuenta» / «Iniciar sesión» funcionan siempre, aunque la dirección ya termine en ese #.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href="#login"], a[href="#registro"]');
+    if (!a) return;
+    e.preventDefault();
+    const cual = a.getAttribute('href').slice(1);
+    mostrarAuth(cual);
+    history.replaceState(null, '', '#' + cual);
+    const el = document.getElementById(cual);
+    if (el && !accesoSec.hidden) el.scrollIntoView({ behavior: 'smooth' });
+  });
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1182,13 +1191,6 @@
     pgVence.value = d;
   });
   pgCvv.addEventListener('input', () => { pgCvv.value = pgCvv.value.replace(/\D/g, '').slice(0, 4); });
-  document.querySelectorAll('#pagoForm .pago-pruebas button').forEach(b => b.addEventListener('click', () => {
-    pgNumero.value = b.dataset.num.replace(/(\d{4})(?=\d)/g, '$1 '); pgNumero.dispatchEvent(new Event('input'));
-    if (!pgTitular.value) pgTitular.value = (usuarioActual && usuarioActual.nombre ? usuarioActual.nombre : 'Cliente Prueba').toUpperCase();
-    if (!pgVence.value) { pgVence.value = '12/' + String((new Date().getFullYear() + 3) % 100).padStart(2, '0'); }
-    if (!pgCvv.value) pgCvv.value = '123';
-    pagoError.textContent = '';
-  }));
   ['pagoCerrar', 'pagoCancelar', 'pagoCerrar2'].forEach(id => document.getElementById(id).addEventListener('click', cerrarPago));
   pagoDialog.addEventListener('cancel', (e) => { if (pagando) e.preventDefault(); });
   document.getElementById('pagoVerEntradas').addEventListener('click', () => {
@@ -1209,6 +1211,12 @@
     [pgNumero, pgTitular, pgVence, pgCvv].forEach(i => i.classList.toggle('invalido', mal.some(x => x[0] === i)));
     if (mal.length) { pagoError.textContent = mal[0][1]; mal[0][0].focus(); return false; }
     return true;
+  }
+  function reservaVencidaEnPago() {
+    if (!pagoDialog.open || pagando) return;
+    vistaPago('form'); pagoPagar.disabled = true;
+    pagoError.textContent = 'Tu reserva expiró (dura 5 minutos) y los asientos quedaron libres. Cierra esta ventana y vuelve a seleccionarlos.';
+    document.getElementById('pagoReloj').textContent = '';
   }
   const pausa = ms => new Promise(r => setTimeout(r, ms));
   function marcarPaso(n) {
@@ -1237,7 +1245,9 @@
 
   vistaForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (pagando || !validarPago()) return;
+    if (pagando) return;
+    if (!misReservas.size) { reservaVencidaEnPago(); return; }
+    if (!validarPago()) return;
     pagando = true; pagoError.textContent = '';
     const pago = { numero: pgNumero.value, titular: pgTitular.value.trim(), vencimiento: pgVence.value, cvv: pgCvv.value };
     const asientos = [...misReservas.keys()], codigos = [...misReservas.values()].map(x => x.codigo).join(', ');
@@ -1286,8 +1296,13 @@
   // ---------- Temporizador real de la reserva ----------
   setInterval(async () => {
     const resto = pintarReloj();
+    if (pagoDialog.open && !pagando && vistaForm && !vistaForm.hidden) {
+      const rl = document.getElementById('pagoReloj');
+      if (resto !== null && misReservas.size) { rl.className = 'pago-reloj'; rl.textContent = '⏱ Tu reserva vence en ' + clockEl.textContent; }
+    }
     if (resto === 0 && misReservas.size) {
       misReservas.clear();
+      reservaVencidaEnPago();
       mensajeTicket('Tu reserva expiró y los asientos quedaron libres.', 'error');
       await recargarAsientos();
       pintarPanel();
