@@ -106,3 +106,79 @@ class UsuarioPublicoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = ["id", "nombre", "email", "rol"]
+
+
+class ReservaInSerializer(serializers.Serializer):
+    asiento_id = serializers.UUIDField()
+
+
+class CompraInSerializer(serializers.Serializer):
+    asiento_ids = serializers.ListField(child=serializers.UUIDField(), min_length=1, max_length=4)
+
+
+class EventoAdminSerializer(serializers.Serializer):
+    nombre = serializers.CharField(min_length=3, max_length=160)
+    fecha = serializers.DateTimeField()
+    lugar = serializers.CharField(min_length=2, max_length=160)
+    filas = serializers.IntegerField(min_value=1, max_value=10)
+    columnas = serializers.IntegerField(min_value=1, max_value=20)
+    estado = serializers.ChoiceField(choices=["BORRADOR", "PUBLICADO"], required=False, default="PUBLICADO")
+
+
+def bloqueo_a_dict(b):
+    return {
+        "id": str(b.id),
+        "asiento_id": str(b.asiento_id),
+        "codigo": b.asiento.codigo,
+        "evento": b.asiento.evento.nombre,
+        "expira": b.fecha_expiracion.isoformat(),
+        "estado": b.estado,
+    }
+
+
+def compra_a_dict(solicitud, detalles):
+    return {
+        "id": str(solicitud.id),
+        "fecha": solicitud.fecha_hora.isoformat(),
+        "estado": solicitud.estado,
+        "total": f"{solicitud.total:.2f}",
+        "boletos": [
+            {"evento": d.asiento.evento.nombre, "fecha_evento": d.asiento.evento.fecha.isoformat(),
+             "lugar": d.asiento.evento.lugar, "codigo": d.asiento.codigo, "precio": f"{d.precio_unitario:.2f}"}
+            for d in detalles
+        ],
+    }
+
+
+class PerfilSerializer(serializers.Serializer):
+    """Datos editables del perfil. Todo es opcional: solo se cambia lo que se envía."""
+
+    nombre = serializers.CharField(min_length=2, max_length=120, required=False, error_messages={
+        "blank": "El nombre es obligatorio.", "min_length": "El nombre debe tener al menos 2 caracteres."})
+    email = serializers.EmailField(max_length=160, required=False, error_messages={
+        "blank": "El correo es obligatorio.", "invalid": "Ingresa un correo válido."})
+    password_actual = serializers.CharField(max_length=128, required=False, allow_blank=True, write_only=True)
+    password_nueva = serializers.CharField(min_length=8, max_length=128, required=False, write_only=True, error_messages={
+        "min_length": "La contraseña debe tener al menos 8 caracteres.", "blank": "La contraseña nueva es obligatoria."})
+
+    def validate_nombre(self, value):
+        return " ".join(value.split())
+
+    def validate_email(self, value):
+        value = value.strip().lower()
+        otro = repo.usuario_por_email(value)
+        if otro is not None and otro.id != self.context["usuario"].id:
+            raise serializers.ValidationError("Ya existe una cuenta con este correo.")
+        return value
+
+    def validate_password_nueva(self, value):
+        if not any(c.isalpha() for c in value) or not any(c.isdigit() for c in value):
+            raise serializers.ValidationError("La contraseña debe incluir al menos una letra y un número.")
+        return value
+
+    def validate(self, datos):
+        if "password_nueva" in datos and not datos.get("password_actual"):
+            raise serializers.ValidationError({"password_actual": "Ingresa tu contraseña actual para cambiarla."})
+        if not any(k in datos for k in ("nombre", "email", "password_nueva")):
+            raise serializers.ValidationError({"detail": "No hay cambios para guardar."})
+        return datos
