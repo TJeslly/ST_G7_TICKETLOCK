@@ -64,7 +64,7 @@ class RegistroUsuarioTests(TestCase):
         self.assertEqual(u.rol, "USUARIO")
         self.assertNotEqual(u.password_hash, "Clave1234")
         self.assertTrue(check_password("Clave1234", u.password_hash))
-        self.assertTrue(Auditoria.objects.filter(accion="REGISTRAR_USUARIO", resultado="OK").exists())
+        self.assertTrue(Auditoria.objects.filter(accion="REGISTRAR_USUARIO", resultado="SUCCESS").exists())
 
     def test_campos_obligatorios(self):
         r = self.client.post(self.URL, {}, content_type="application/json")
@@ -113,7 +113,7 @@ class LoginTests(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["nombre"], "Ana Pérez")
         self.assertNotIn("password_hash", r.json())
-        self.assertTrue(Auditoria.objects.filter(accion="INICIAR_SESION", resultado="OK").exists())
+        self.assertTrue(Auditoria.objects.filter(accion="INICIAR_SESION", resultado="SUCCESS").exists())
 
     def test_contrasena_incorrecta_y_correo_inexistente_dan_el_mismo_mensaje(self):
         a = self._login(password="Equivocada1")
@@ -121,7 +121,7 @@ class LoginTests(TestCase):
         self.assertEqual(a.status_code, 401)
         self.assertEqual(b.status_code, 401)
         self.assertEqual(a.json(), b.json())
-        self.assertEqual(Auditoria.objects.filter(accion="INICIAR_SESION", resultado="FALLIDO").count(), 2)
+        self.assertEqual(Auditoria.objects.filter(accion="INICIAR_SESION", resultado="DENIED").count(), 2)
 
     def test_campos_obligatorios(self):
         r = self.client.post(self.URL, {}, content_type="application/json")
@@ -158,3 +158,121 @@ class CatalogoDemoTests(TestCase):
         evento = Evento.objects.get(nombre="Candlelight: Tributo a Queen")
         estados = {a["estado"] for a in self.client.get(f"/api/eventos/{evento.id}/asientos/").json()["asientos"]}
         self.assertEqual(estados, {"DISPONIBLE", "BLOQUEADO", "VENDIDO"})
+
+
+class ConexionYCapasTests(TestCase):
+    """Fase 4: módulo de conexión, manejo de errores y capa de servicios."""
+
+    def test_salud_responde_con_estado_y_totales(self):
+        r = self.client.get("/api/salud/")
+        self.assertEqual(r.status_code, 200)
+        datos = r.json()
+        self.assertTrue(datos["ok"])
+        self.assertEqual(datos["motor"], "postgresql")
+        self.assertIn("latencia_ms", datos)
+        self.assertEqual(
+            set(datos["registros"]), {"eventos", "asientos", "usuarios", "solicitudes_compra"}
+        )
+        # Nunca se expone usuario ni contraseña de la base.
+        self.assertNotIn("password", str(datos).lower())
+
+    def test_salud_503_si_la_base_no_responde(self):
+        from unittest import mock
+
+        from django.db import OperationalError
+
+        with mock.patch("core.db.connection.cursor", side_effect=OperationalError("caída")):
+            r = self.client.get("/api/salud/")
+        self.assertEqual(r.status_code, 503)
+        self.assertFalse(r.json()["ok"])
+
+    def test_eventos_503_con_mensaje_claro_si_falla_la_conexion(self):
+        from unittest import mock
+
+        from django.db import OperationalError
+
+        with mock.patch("core.repositories.Evento.objects") as m:
+            m.filter.side_effect = OperationalError("sin conexión")
+            r = self.client.get("/api/eventos/")
+        self.assertEqual(r.status_code, 503)
+        self.assertIn("base de datos", r.json()["detail"])
+
+    def test_registro_503_si_falla_la_conexion(self):
+        from unittest import mock
+
+        from django.db import OperationalError
+
+        with mock.patch("core.repositories.Usuario.objects") as m:
+            m.filter.side_effect = OperationalError("sin conexión")
+            r = self.client.post(
+                "/api/usuarios/",
+                {"nombre": "Ana Perez", "email": "ana@correo.com", "password": "Clave1234"},
+                content_type="application/json",
+            )
+        self.assertEqual(r.status_code, 503)
+
+    def test_servicio_ordena_asientos_en_orden_natural(self):
+        from .services import clave_natural
+
+        codigos = ["A10", "A2", "A1", "B1"]
+        self.assertEqual(sorted(codigos, key=clave_natural), ["A1", "A2", "A10", "B1"])
+
+    def test_servicio_autenticar_registra_auditoria(self):
+        from . import services
+
+        self.client.post(
+            "/api/usuarios/",
+            {"nombre": "Ana Perez", "email": "ana@correo.com", "password": "Clave1234"},
+            content_type="application/json",
+        )
+        self.assertIsNotNone(services.autenticar("ANA@correo.com", "Clave1234"))
+        self.assertIsNone(services.autenticar("ana@correo.com", "otra"))
+        self.assertEqual(Auditoria.objects.filter(accion="INICIAR_SESION").count(), 2)
+
+
+class AuditoriaConRestriccionDeSchemaTests(TestCase):
+    """La base real (database/schema.sql) restringe auditoria.resultado con un CHECK.
+    La base de pruebas se crea con migraciones y no lo trae, así que lo agregamos aquí
+    para que estas pruebas fallen si el código vuelve a usar valores no admitidos."""
+
+    def setUp(self):
+        from django.db import connection
+
+        with connection.cursor() as cur:
+            cur.execute(
+                "ALTER TABLE auditoria ADD CONSTRAINT chk_auditoria_resultado "
+                "CHECK (resultado IN ('SUCCESS', 'DENIED', 'ERROR'))"
+            )
+
+    def test_registro_y_login_respetan_el_check(self):
+        r = self.client.post(
+            "/api/usuarios/",
+            {"nombre": "Ana Perez", "email": "ana@correo.com", "password": "Clave1234"},
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 201)
+        ok = self.client.post(
+            "/api/login/", {"email": "ana@correo.com", "password": "Clave1234"}, content_type="application/json"
+        )
+        mal = self.client.post(
+            "/api/login/", {"email": "ana@correo.com", "password": "Otra12345"}, content_type="application/json"
+        )
+        self.assertEqual((ok.status_code, mal.status_code), (200, 401))
+        self.assertEqual(Auditoria.objects.filter(resultado="SUCCESS").count(), 2)
+        self.assertEqual(Auditoria.objects.filter(resultado="DENIED").count(), 1)
+
+    def test_otra_violacion_de_integridad_no_se_reporta_como_correo_duplicado(self):
+        from django.db import IntegrityError
+        from unittest import mock
+
+        with mock.patch(
+            "core.repositories.Usuario.objects.create",
+            side_effect=IntegrityError("violates check constraint"),
+        ):
+            r = self.client.post(
+                "/api/usuarios/",
+                {"nombre": "Ana Perez", "email": "ana@correo.com", "password": "Clave1234"},
+                content_type="application/json",
+            )
+        self.assertEqual(r.status_code, 500)
+        self.assertNotIn("correo", r.json().get("detail", "").lower())
