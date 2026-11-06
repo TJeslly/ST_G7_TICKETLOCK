@@ -1,13 +1,14 @@
-import re
+"""Capa de interfaz HTTP (Fase 4): recibe la petición, valida y responde.
 
-from django.contrib.auth.hashers import check_password
-from django.db import IntegrityError, transaction
-from django.shortcuts import get_object_or_404
+La lógica de negocio está en ``services`` y las consultas en ``repositories``;
+la conexión a la base de datos, en ``db``.
+"""
+from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 
+from . import db, repositories as repo, services
 from .cors import CorsAPIView
-from .models import Auditoria, Evento, Usuario
 from .serializers import (
     AsientoSerializer,
     EventoSerializer,
@@ -17,30 +18,39 @@ from .serializers import (
 )
 
 
-def _clave_natural(codigo):
-    """Ordena A1, A2, ..., A10 (y no A1, A10, A2)."""
-    m = re.match(r"^([A-Za-z]+)(\d+)$", codigo)
-    return (m.group(1), int(m.group(2))) if m else (codigo, 0)
+class SaludView(CorsAPIView):
+    """GET /api/salud/ — estado de la conexión con PostgreSQL y totales de registros.
+
+    Responde 200 si la base responde y 503 si no. Sirve a la interfaz para mostrar
+    el estado de conexión y como prueba rápida de que los datos vienen de la base.
+    """
+
+    def get(self, request):
+        estado = db.verificar_conexion()
+        if not estado["ok"]:
+            return Response(estado, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        estado["registros"] = repo.contar_registros()
+        return Response(estado)
 
 
 class EventoListView(CorsAPIView):
     """GET /api/eventos/ — catálogo público de eventos publicados (RF03)."""
 
     def get(self, request):
-        eventos = Evento.objects.filter(estado="PUBLICADO").order_by("fecha")
-        return Response(EventoSerializer(eventos, many=True).data)
+        return Response(EventoSerializer(services.listar_eventos(), many=True).data)
 
 
 class AsientosEventoView(CorsAPIView):
     """GET /api/eventos/<id>/asientos/ — estado de cada asiento del evento (RF04)."""
 
     def get(self, request, pk):
-        evento = get_object_or_404(Evento, pk=pk, estado="PUBLICADO")
-        asientos = sorted(evento.asientos.all(), key=lambda a: _clave_natural(a.codigo))
+        evento = repo.evento_publicado(pk)
+        if evento is None:
+            raise Http404
         return Response(
             {
                 "evento": EventoSerializer(evento).data,
-                "asientos": AsientoSerializer(asientos, many=True).data,
+                "asientos": AsientoSerializer(services.asientos_ordenados(evento), many=True).data,
             }
         )
 
@@ -52,15 +62,8 @@ class UsuarioCreateView(CorsAPIView):
         serializer = RegistroUsuarioSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            with transaction.atomic():
-                usuario = serializer.save()
-                Auditoria.objects.create(
-                    accion="REGISTRAR_USUARIO",
-                    recurso=f"usuarios/{usuario.id}",
-                    resultado="OK",
-                )
-        except IntegrityError:
+        usuario = services.registrar_usuario(serializer.validated_data)
+        if usuario is None:
             # Dos registros simultáneos con el mismo correo: la restricción UNIQUE de la BD lo detiene.
             return Response(
                 {"email": ["Ya existe una cuenta con este correo."]},
@@ -76,24 +79,13 @@ class LoginView(CorsAPIView):
     solo conserva los datos públicos del usuario durante la sesión del navegador.
     """
 
-    MENSAJE = "Correo o contraseña incorrectos."
-
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        email = serializer.validated_data["email"].strip().lower()
-        password = serializer.validated_data["password"]
-        usuario = Usuario.objects.filter(email__iexact=email).first()
-        # Mismo mensaje si el correo no existe o la contraseña falla (no revela cuentas).
-        ok = usuario is not None and check_password(password, usuario.password_hash)
-
-        Auditoria.objects.create(
-            accion="INICIAR_SESION",
-            recurso=f"usuarios/{usuario.id}" if usuario else "usuarios/desconocido",
-            resultado="OK" if ok else "FALLIDO",
+        usuario = services.autenticar(
+            serializer.validated_data["email"], serializer.validated_data["password"]
         )
-        if not ok:
-            return Response({"detail": self.MENSAJE}, status=status.HTTP_401_UNAUTHORIZED)
+        if usuario is None:
+            return Response({"detail": services.MENSAJE_LOGIN}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(UsuarioPublicoSerializer(usuario).data)

@@ -1,6 +1,7 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
+from . import repositories as repo
 from .models import Asiento, Evento, Usuario
 
 
@@ -60,7 +61,7 @@ class RegistroUsuarioSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         value = value.strip().lower()
-        if Usuario.objects.filter(email__iexact=value).exists():
+        if repo.existe_email(value):
             raise serializers.ValidationError("Ya existe una cuenta con este correo.")
         return value
 
