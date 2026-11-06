@@ -1,0 +1,63 @@
+# Despliegue de TicketLock: PostgreSQL + 3 réplicas del backend + NGINX como balanceador.
+#   1) Copia .env.example como .env y cambia las contraseñas.
+#   2) docker compose up --build
+#   3) Abre http://localhost:8080
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ticketlock}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en el archivo .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-ticketlock}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Tarea de una sola vez: registra las migraciones de Django y carga el catálogo de demostración.
+  preparar:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: sh -c "python manage.py migrate --fake-initial && python manage.py seed_catalogo"
+    environment: &entorno_api
+      DB_NAME: ${DB_NAME:-ticketlock}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "5432"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Define DJANGO_SECRET_KEY en el archivo .env}
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,nginx
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment: *entorno_api
+    deploy:
+      replicas: 3
+    depends_on:
+      preparar:
+        condition: service_completed_successfully
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

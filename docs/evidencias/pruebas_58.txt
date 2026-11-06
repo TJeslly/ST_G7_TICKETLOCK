@@ -1,0 +1,60 @@
+test_otra_violacion_de_integridad_no_se_reporta_como_correo_duplicado ... Operación fallida en la base de datos: IntegrityError
+test_registro_y_login_respetan_el_check ... ok
+test_mapa_incluye_los_tres_estados ... ok
+test_seed_completa_asientos_y_es_idempotente ... ok
+test_eventos_503_con_mensaje_claro_si_falla_la_conexion ... Base de datos no disponible: OperationalError
+test_registro_503_si_falla_la_conexion ... Base de datos no disponible: OperationalError
+test_salud_503_si_la_base_no_responde ... Verificación de conexión fallida: OperationalError
+test_salud_responde_con_estado_y_totales ... ok
+test_servicio_autenticar_registra_auditoria ... ok
+test_servicio_ordena_asientos_en_orden_natural ... ok
+test_asientos_del_evento_en_orden_natural ... ok
+test_evento_inexistente_devuelve_404 ... ok
+test_lista_solo_eventos_publicados_con_disponibilidad ... ok
+test_respuesta_incluye_cabecera_cors ... ok
+test_campos_obligatorios ... ok
+test_contrasena_incorrecta_y_correo_inexistente_dan_el_mismo_mensaje ... ok
+test_login_correcto_devuelve_datos_publicos_y_audita ... ok
+test_campos_obligatorios ... ok
+test_contrasena_corta_o_sin_numero ... ok
+test_correo_duplicado_sin_importar_mayusculas ... ok
+test_correo_invalido ... ok
+test_preflight_options ... ok
+test_registro_valido_crea_usuario_con_hash_y_auditoria ... ok
+test_cambiar_estado_y_validar_datos ... ok
+test_crear_evento_genera_la_cuadricula_de_asientos ... ok
+test_un_usuario_normal_no_administra ... ok
+test_compra_con_reserva_vencida_se_rechaza ... ok
+test_compra_confirma_todo_en_una_transaccion ... ok
+test_historial_de_compras ... ok
+test_mas_de_cuatro_boletos_se_rechaza ... ok
+test_no_se_compra_sin_reserva_ni_con_reserva_ajena ... ok
+test_repetir_la_compra_no_cobra_dos_veces ... ok
+test_si_un_asiento_falla_no_se_compra_ninguno ... ok
+test_auditoria_solo_para_administradores ... ok
+test_cambiar_contrasena_exige_la_actual ... ok
+test_contrasena_nueva_debil_y_sin_cambios ... ok
+test_correo_de_otra_cuenta_se_rechaza ... ok
+test_modificar_nombre_y_correo ... ok
+test_no_se_puede_cambiar_el_rol_desde_el_perfil ... ok
+test_registro_no_permite_elegirse_administrador ... ok
+test_un_token_con_rol_falsificado_no_da_acceso
+test_ver_perfil_requiere_sesion ... ok
+test_el_usuario_libera_su_reserva_y_no_la_ajena ... ok
+test_liberar_vencidos_devuelve_el_asiento_a_disponible ... ok
+test_maximo_cuatro_reservas_simultaneas ... ok
+test_mis_reservas_lista_solo_las_vigentes_propias ... ok
+test_no_se_reserva_en_evento_cerrado_ni_asiento_vendido ... ok
+test_otro_usuario_no_puede_reservar_un_asiento_ocupado ... ok
+test_repetir_la_reserva_propia_no_duplica ... ok
+test_reserva_vencida_se_libera_y_otro_puede_tomarla ... ok
+test_reservar_bloquea_el_asiento_con_expiracion ... ok
+test_admin_requiere_rol ... ok
+test_login_devuelve_token_valido ... ok
+test_rutas_protegidas_exigen_token ... ok
+test_token_alterado_o_vencido_se_rechaza ... ok
+test_compradores_distintos_peleando_por_asientos_cruzados
+test_diez_personas_reservan_el_mismo_asiento ... ok
+test_dos_compras_simultaneas_del_mismo_asiento_no_producen_doble_venta ... ok
+Ran 58 tests in 10.153s
+OK
