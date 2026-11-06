@@ -29,6 +29,7 @@
     line-height: 1.5;
   }
   .display{ font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.02em; }
+  html{ scroll-behavior: smooth; scroll-padding-top: 84px; }
 
   header{
     display:flex; align-items:center; justify-content:space-between;
@@ -125,7 +126,7 @@
   .btn-confirm:disabled{ background: var(--line); color: var(--text-dim); cursor: not-allowed; }
   .hint{ text-align:center; font-size: 12px; color: var(--text-dim); margin-top: 10px; }
 
-  footer{ padding: 26px 5%; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap: 10px; }
+  footer{ padding: 26px 5% 76px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap: 10px; }
 
   /* ---- Eventos ---- */
   .events{ padding: 40px 5% 10px; }
@@ -166,6 +167,19 @@
   .badge{ display:inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight:600; }
   .badge-ok{ background: rgba(34,197,94,.15); color: var(--seat-available); }
   .badge-demo{ background: rgba(255,176,32,.15); color: var(--amber); }
+  .badge-error{ background: rgba(248,113,113,.15); color: #F87171; }
+  .db-status{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:12px; }
+  .db-detail{ color: var(--text-dim); }
+
+  /* ---- Navegación: volver al inicio y atajos ---- */
+  .to-top{
+    position: fixed; right: 22px; bottom: 22px; z-index: 20;
+    background: var(--accent); color:#fff; border:0; border-radius: 999px;
+    padding: 11px 16px; font: 600 13px 'Inter', sans-serif; cursor:pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  }
+  .to-top[hidden]{ display:none; }
+  .to-top:focus-visible, nav a:focus-visible{ outline: 2px solid #fff; outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -176,8 +190,9 @@
     <ul>
       <li><a href="#inicio" class="active">Inicio</a></li>
       <li><a href="#eventos">Eventos</a></li>
+      <li><a href="#asientos">Asientos</a></li>
       <li><a href="#como-funciona">Cómo funciona</a></li>
-      <li><a href="#login">Acceso</a></li>
+      <li><a href="#acceso">Cuenta</a></li>
     </ul>
   </nav>
   <div class="nav-actions">
@@ -209,7 +224,7 @@
 
 <div class="layout">
   <div>
-    <h2 class="section-title">Selecciona tu asiento</h2>
+    <h2 class="section-title" id="asientos">Selecciona tu asiento</h2>
     <p class="section-sub">Elige un lugar disponible. Se reservará solo para ti durante los próximos minutos.</p>
 
     <div class="stage-wrap"><div class="stage">ESCENARIO</div></div>
@@ -312,8 +327,12 @@
 
 <footer>
   <span>TicketLock — Proyecto académico, Sistemas Transaccionales</span>
-  <span class="badge badge-demo" id="apiBadge">Comprobando conexión…</span>
+  <div class="db-status">
+    <span class="badge badge-demo" id="apiBadge">Comprobando conexión…</span>
+    <span class="db-detail" id="dbDetail" role="status"></span>
+  </div>
 </footer>
+<button type="button" class="to-top" id="toTop" hidden aria-label="Volver al inicio">↑ Inicio</button>
 
 <script>
   // ---------- Configuración ----------
@@ -385,11 +404,37 @@
     return d.toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' });
   }
 
+  const dbDetail = document.getElementById('dbDetail');
+  let errorBD = false; // el backend responde pero PostgreSQL no
+
   function marcarModo() {
+    if (errorBD) {
+      apiBadge.textContent = 'Backend activo · sin conexión a la base de datos';
+      apiBadge.className = 'badge badge-error';
+      return;
+    }
     apiBadge.textContent = modoDemo
       ? 'Modo demostración · sin conexión al backend'
       : 'Conectado al backend (Django + PostgreSQL)';
     apiBadge.className = 'badge ' + (modoDemo ? 'badge-demo' : 'badge-ok');
+  }
+
+  // Estado de la base de datos y totales de registros (consulta a /api/salud/).
+  async function cargarEstadoBD() {
+    dbDetail.textContent = '';
+    if (modoDemo) return;
+    try {
+      const r = await api('/salud/');
+      if (r.ok && r.datos && r.datos.ok) {
+        const t = r.datos.registros;
+        dbDetail.textContent = 'PostgreSQL "' + r.datos.base + '" · ' + r.datos.latencia_ms + ' ms · ' +
+          t.eventos + ' eventos · ' + t.asientos + ' asientos · ' + t.usuarios + ' usuarios registrados';
+      } else {
+        errorBD = true;
+        dbDetail.textContent = (r.datos && r.datos.detalle) || 'La base de datos no responde.';
+        marcarModo();
+      }
+    } catch (e) { /* sin backend: ya se muestra el modo demostración */ }
   }
 
   // ---------- Asientos ----------
@@ -505,8 +550,22 @@
     if (!modoDemo) {
       try {
         const r = await api('/eventos/');
+        if (r.status === 503) {
+          // El backend está activo, pero PostgreSQL no responde.
+          errorBD = true;
+          marcarModo();
+          eventsMsg.style.color = '#F87171';
+          dbDetail.textContent = 'Mostrando datos de ejemplo mientras se restablece la conexión.';
+          modoDemo = true;
+          todosEventos = DEMO_EVENTOS;
+          renderFiltros();
+          renderEventos();
+          eventsMsg.textContent = (r.datos && r.datos.detail) || 'No se pudo conectar con la base de datos.';
+          return;
+        }
         if (!r.ok) throw new Error('HTTP ' + r.status);
         marcarModo();
+        cargarEstadoBD();
         todosEventos = r.datos;
         renderFiltros();
         renderEventos();
@@ -567,6 +626,7 @@
         formMsg.textContent = 'Cuenta creada para ' + r.datos.nombre + '. Ya puedes iniciar sesión.';
         form.reset();
         CAMPOS.forEach(c => mostrarError(c, ''));
+        cargarEstadoBD();
       } else if (r.status === 400 && r.datos) {
         Object.entries(r.datos).forEach(([campo, msgs]) => {
           const destino = campo === 'password' ? 'password' : campo;
@@ -574,6 +634,9 @@
         });
         formMsg.className = 'form-msg error';
         formMsg.textContent = 'Revisa los campos marcados.';
+      } else if (r.status === 503 || r.status === 500) {
+        formMsg.className = 'form-msg error';
+        formMsg.textContent = (r.datos && r.datos.detail) || 'No se pudo completar el registro. Intenta de nuevo.';
       } else {
         throw new Error('HTTP ' + r.status);
       }
@@ -640,6 +703,9 @@
       } else if (r.status === 401 || r.status === 400) {
         loginMsg.className = 'form-msg error';
         loginMsg.textContent = (r.datos && r.datos.detail) || 'Revisa los datos ingresados.';
+      } else if (r.status === 503 || r.status === 500) {
+        loginMsg.className = 'form-msg error';
+        loginMsg.textContent = (r.datos && r.datos.detail) || 'No se pudo iniciar sesión. Intenta de nuevo.';
       } else {
         throw new Error('HTTP ' + r.status);
       }
@@ -681,6 +747,21 @@
     const s = String(seconds % 60).padStart(2, '0');
     clockEl.textContent = `${m}:${s}`;
   }, 1000);
+
+  // ---------- Navegación: sección activa y botón "Volver al inicio" ----------
+  const enlaces = [...document.querySelectorAll('nav ul a')];
+  const secciones = enlaces.map(a => document.querySelector(a.getAttribute('href')));
+  const toTop = document.getElementById('toTop');
+  function actualizarNavegacion() {
+    const y = window.scrollY + 140;
+    let activo = 0;
+    secciones.forEach((sec, i) => { if (sec && sec.getBoundingClientRect().top + window.scrollY <= y) activo = i; });
+    enlaces.forEach((a, i) => a.classList.toggle('active', i === activo));
+    toTop.hidden = window.scrollY < 600;
+  }
+  window.addEventListener('scroll', actualizarNavegacion, { passive: true });
+  toTop.addEventListener('click', () => { location.hash = '#inicio'; window.scrollTo({ top: 0 }); });
+  actualizarNavegacion();
 
   cargarEventos();
 </script>
