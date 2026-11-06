@@ -184,6 +184,14 @@
   .compra .meta{ color: var(--text-dim); font-size: 13px; }
   .compra .boletos{ margin: 10px 0 0; padding: 0; list-style: none; display:flex; flex-wrap:wrap; gap:8px; }
   .compra .boletos li{ background: rgba(34,197,94,.12); color: var(--seat-available); border-radius: 6px; padding: 4px 10px; font-size: 13px; font-weight:600; }
+  .compra.con-evento{ display:flex; gap:16px; padding:0; overflow:hidden; align-items:stretch; }
+  .compra.con-evento img{ width:150px; object-fit:cover; flex:none; }
+  .compra.con-evento .info{ padding:14px 16px 14px 0; min-width:0; }
+  .compra.con-evento .pie{ margin-top:10px; }
+  .estado-evento{ display:inline-block; vertical-align:middle; margin-left:6px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .estado-evento.proximo{ background: rgba(245,158,11,.15); color: var(--amber); }
+  .estado-evento.pasado{ background: rgba(148,163,184,.15); color: var(--text-dim); }
+  @media (max-width:560px){ .compra.con-evento{ flex-direction:column; } .compra.con-evento img{ width:100%; height:130px; } .compra.con-evento .info{ padding:0 16px 14px; } }
   .admin-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 20px; max-width: 760px; }
   .admin-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; background: var(--bg-raised); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; max-width:760px; font-size:14px; }
   .admin-row .nombre{ flex:1 1 220px; font-weight:600; }
@@ -209,6 +217,46 @@
   .seat.mine{ background: var(--seat-selected); box-shadow: 0 0 10px rgba(255,59,127,.5); cursor:pointer; }
 
   .to-top:focus-visible, nav a:focus-visible{ outline: 2px solid #fff; outline-offset: 3px; }
+
+  /* ---------- Ventana de pago (simulada) ---------- */
+  dialog#pagoDialog{ background: var(--bg-raised); color: var(--text); border: 1px solid var(--line); border-radius: 16px; padding: 0; width: min(460px, 94vw); max-height: 94vh; overflow:auto; }
+  dialog#pagoDialog::backdrop{ background: rgba(0,0,0,.72); backdrop-filter: blur(3px); }
+  .pago-head{ display:flex; justify-content:space-between; align-items:center; padding:18px 22px 0; }
+  .pago-head h2{ margin:0; font-size:26px; }
+  .pago-x{ background:none; border:none; color:var(--text-dim); font-size:22px; cursor:pointer; line-height:1; padding:4px 8px; }
+  .pago-body{ padding:14px 22px 22px; }
+  .pago-aviso{ background: rgba(255,176,32,.1); border:1px solid rgba(255,176,32,.35); color: var(--amber); border-radius:8px; padding:9px 12px; font-size:12.5px; font-weight:600; margin-bottom:14px; }
+  .pago-resumen{ border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:13.5px; }
+  .pago-resumen strong{ display:block; font-size:15px; margin-bottom:2px; }
+  .pago-resumen .fila{ display:flex; justify-content:space-between; color:var(--text-dim); margin-top:2px; }
+  .pago-resumen .total{ color:var(--text); font-weight:700; font-size:15px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line); }
+  .pago-campo{ margin-bottom:12px; }
+  .pago-campo label{ display:block; font-size:12.5px; color:var(--text-dim); margin-bottom:5px; font-weight:600; }
+  .pago-campo input{ width:100%; background:#14171b; border:1px solid var(--line); color:var(--text); border-radius:8px; padding:11px 12px; font-size:15px; font-family:'Inter',sans-serif; }
+  .pago-campo input:focus{ outline:none; border-color: var(--accent); }
+  .pago-campo input.invalido{ border-color:#EF4444; }
+  .pago-campo .marca{ float:right; color:var(--accent); font-weight:700; }
+  .pago-fila{ display:flex; gap:12px; } .pago-fila .pago-campo{ flex:1; }
+  .pago-pruebas{ font-size:12px; color:var(--text-dim); margin:2px 0 14px; }
+  .pago-pruebas button{ background:#14171b; border:1px solid var(--line); color:var(--text); border-radius:6px; padding:4px 9px; font-size:12px; cursor:pointer; margin:4px 6px 0 0; font-family:'Inter',sans-serif; }
+  .pago-pruebas button:hover{ border-color: var(--accent); }
+  .pago-error{ color:#F87171; font-size:13px; margin:0 0 12px; min-height:0; }
+  .pago-error:empty{ display:none; }
+  .pago-acciones{ display:flex; gap:10px; }
+  .pago-acciones .btn-confirm{ flex:1; } .pago-acciones .btn-sec{ background:none; border:1px solid var(--line); color:var(--text); border-radius:8px; padding:0 18px; cursor:pointer; font-family:'Inter',sans-serif; font-weight:600; }
+  .pago-pasos{ list-style:none; margin:26px 0 10px; padding:0; }
+  .pago-pasos li{ display:flex; align-items:center; gap:12px; padding:10px 0; color:var(--text-dim); font-size:15px; }
+  .pago-pasos li .ico{ width:26px; height:26px; border-radius:50%; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:14px; flex:none; }
+  .pago-pasos li.activo{ color:var(--text); } .pago-pasos li.activo .ico{ border-color:var(--accent); border-top-color:transparent; animation: pagoGira .8s linear infinite; }
+  .pago-pasos li.hecho{ color:var(--text); } .pago-pasos li.hecho .ico{ background:#22C55E; border-color:#22C55E; color:#fff; }
+  @keyframes pagoGira{ to{ transform: rotate(360deg); } }
+  .pago-ok{ text-align:center; padding:6px 0 4px; }
+  .pago-ok .check{ width:60px; height:60px; border-radius:50%; background:#22C55E; color:#fff; font-size:32px; display:flex; align-items:center; justify-content:center; margin:6px auto 10px; }
+  .pago-ok h3{ margin:0 0 2px; font-size:20px; } .pago-ok p{ margin:0; color:var(--text-dim); font-size:13px; }
+  .recibo{ border:1px dashed var(--line); border-radius:10px; padding:12px 14px; margin:16px 0; font-size:13.5px; }
+  .recibo .fila{ display:flex; justify-content:space-between; gap:12px; padding:3px 0; } .recibo .fila span:first-child{ color:var(--text-dim); }
+  .recibo .fila span:last-child{ text-align:right; font-weight:600; }
+  .recibo .codigo{ font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:.08em; color:var(--accent); }
 </style>
 </head>
 <body>
@@ -424,6 +472,42 @@
 </footer>
 <button type="button" class="to-top" id="toTop" hidden aria-label="Volver al inicio">↑ Inicio</button>
 
+<dialog id="pagoDialog" aria-labelledby="pagoTitulo">
+  <div class="pago-head"><h2 class="display" id="pagoTitulo">Pago</h2><button type="button" class="pago-x" id="pagoCerrar" aria-label="Cerrar">&times;</button></div>
+  <div class="pago-body">
+    <!-- Paso 1: formulario -->
+    <form id="pagoForm" novalidate autocomplete="off">
+      <div class="pago-aviso">🔒 Simulador académico: usa datos ficticios. No ingreses tu tarjeta real; nada se guarda ni se cobra.</div>
+      <div class="pago-resumen" id="pagoResumen"></div>
+      <div class="pago-campo"><label for="pgNumero">Número de tarjeta <span class="marca" id="pgMarca"></span></label>
+        <input id="pgNumero" inputmode="numeric" maxlength="23" placeholder="4242 4242 4242 4242" autocomplete="off"></div>
+      <div class="pago-campo"><label for="pgTitular">Titular</label>
+        <input id="pgTitular" maxlength="80" placeholder="NOMBRE APELLIDO" autocomplete="off"></div>
+      <div class="pago-fila">
+        <div class="pago-campo"><label for="pgVence">Vencimiento (MM/AA)</label><input id="pgVence" inputmode="numeric" maxlength="5" placeholder="08/29" autocomplete="off"></div>
+        <div class="pago-campo"><label for="pgCvv">CVV</label><input id="pgCvv" inputmode="numeric" maxlength="4" placeholder="123" autocomplete="off"></div>
+      </div>
+      <div class="pago-pruebas">Tarjetas de prueba (clic para llenar):
+        <div><button type="button" data-num="4242424242424242">✔ Aprobada</button><button type="button" data-num="4000000000000002">✖ Rechazada por el banco</button><button type="button" data-num="4000000000009995">✖ Fondos insuficientes</button></div></div>
+      <p class="pago-error" id="pagoError" role="alert"></p>
+      <div class="pago-acciones"><button type="button" class="btn-sec" id="pagoCancelar">Cancelar</button><button type="submit" class="btn-confirm" id="pagoPagar">Pagar</button></div>
+    </form>
+    <!-- Paso 2: proceso -->
+    <div id="pagoProceso" hidden>
+      <ul class="pago-pasos" id="pagoPasos">
+        <li data-paso="0"><span class="ico"></span>Validando datos de la tarjeta</li>
+        <li data-paso="1"><span class="ico"></span>Autorizando el pago</li>
+        <li data-paso="2"><span class="ico"></span>Confirmando la compra</li>
+      </ul>
+    </div>
+    <!-- Paso 3: comprobante -->
+    <div id="pagoExito" hidden>
+      <div class="pago-ok"><div class="check">✓</div><h3>¡Pago aprobado!</h3><p>Tu compra quedó confirmada. Guarda tu comprobante.</p></div>
+      <div class="recibo" id="pagoRecibo"></div>
+      <div class="pago-acciones"><button type="button" class="btn-sec" id="pagoCerrar2">Cerrar</button><button type="button" class="btn-confirm" id="pagoVerEntradas">Ver mis entradas</button></div>
+    </div>
+  </div>
+</dialog>
 <script>
   // ---------- Configuración ----------
   // En local (o abriendo el archivo directamente) se usa la API de Django.
@@ -1041,35 +1125,163 @@
   pintarPanel();
   sincronizarAuthConHash();
 
-  // ---------- Confirmación de la compra (transacción en el servidor) ----------
-  confirmBtn.addEventListener('click', async () => {
+  // ---------- Pago simulado + confirmación de la compra (transacción en el servidor) ----------
+  const pagoDialog = document.getElementById('pagoDialog');
+  const pgNumero = document.getElementById('pgNumero'), pgTitular = document.getElementById('pgTitular');
+  const pgVence = document.getElementById('pgVence'), pgCvv = document.getElementById('pgCvv');
+  const pagoError = document.getElementById('pagoError'), pagoPagar = document.getElementById('pagoPagar');
+  const vistaForm = document.getElementById('pagoForm'), vistaProceso = document.getElementById('pagoProceso'), vistaExito = document.getElementById('pagoExito');
+  let pagando = false;
+
+  function vistaPago(cual) {
+    vistaForm.hidden = cual !== 'form'; vistaProceso.hidden = cual !== 'proceso'; vistaExito.hidden = cual !== 'exito';
+    document.getElementById('pagoTitulo').textContent = cual === 'exito' ? 'Comprobante' : cual === 'proceso' ? 'Procesando' : 'Pago con tarjeta';
+  }
+  function marcaTarjeta(n) {
+    if (/^4/.test(n)) return 'Visa';
+    if (/^(5[1-5]|2[2-7])/.test(n)) return 'Mastercard';
+    if (/^3[47]/.test(n)) return 'Amex';
+    return '';
+  }
+  function luhn(n) {
+    if (!/^\d{13,19}$/.test(n)) return false;
+    let t = 0;
+    [...n].reverse().forEach((c, i) => { let d = +c; if (i % 2) { d *= 2; if (d > 9) d -= 9; } t += d; });
+    return t % 10 === 0;
+  }
+  function filaResumen(a, b, clase) {
+    const f = document.createElement('div'); f.className = 'fila' + (clase ? ' ' + clase : '');
+    const x = document.createElement('span'); x.textContent = a; const y = document.createElement('span'); y.textContent = b;
+    f.append(x, y); return f;
+  }
+  function pintarResumenPago() {
+    const r = document.getElementById('pagoResumen'); r.replaceChildren();
+    const n = misReservas.size, codigos = [...misReservas.values()].map(x => x.codigo).join(', ');
+    const t = document.createElement('strong'); t.textContent = eventoActivo ? eventoActivo.nombre : 'Tu compra';
+    r.append(t, filaResumen('Asientos', codigos), filaResumen(n + ' × ' + fmtCOP(PRECIO), fmtCOP(PRECIO * n)), filaResumen('Total a pagar', fmtCOP(PRECIO * n), 'total'));
+    pagoPagar.textContent = 'Pagar ' + fmtCOP(PRECIO * n);
+  }
+  function abrirPago() {
+    document.getElementById('pagoForm').reset();
+    [pgNumero, pgTitular, pgVence, pgCvv].forEach(i => i.classList.remove('invalido'));
+    pagoError.textContent = ''; document.getElementById('pgMarca').textContent = '';
+    pintarResumenPago(); vistaPago('form'); pagoPagar.disabled = false;
+    if (!pagoDialog.open) pagoDialog.showModal();
+    pgNumero.focus();
+  }
+  function cerrarPago() { if (!pagando && pagoDialog.open) pagoDialog.close(); }
+
+  pgNumero.addEventListener('input', () => {
+    const d = pgNumero.value.replace(/\D/g, '').slice(0, 19);
+    pgNumero.value = d.replace(/(\d{4})(?=\d)/g, '$1 ');
+    document.getElementById('pgMarca').textContent = marcaTarjeta(d);
+  });
+  pgVence.addEventListener('input', () => {
+    let d = pgVence.value.replace(/\D/g, '').slice(0, 4);
+    if (d.length >= 3) d = d.slice(0, 2) + '/' + d.slice(2);
+    pgVence.value = d;
+  });
+  pgCvv.addEventListener('input', () => { pgCvv.value = pgCvv.value.replace(/\D/g, '').slice(0, 4); });
+  document.querySelectorAll('#pagoForm .pago-pruebas button').forEach(b => b.addEventListener('click', () => {
+    pgNumero.value = b.dataset.num.replace(/(\d{4})(?=\d)/g, '$1 '); pgNumero.dispatchEvent(new Event('input'));
+    if (!pgTitular.value) pgTitular.value = (usuarioActual && usuarioActual.nombre ? usuarioActual.nombre : 'Cliente Prueba').toUpperCase();
+    if (!pgVence.value) { pgVence.value = '12/' + String((new Date().getFullYear() + 3) % 100).padStart(2, '0'); }
+    if (!pgCvv.value) pgCvv.value = '123';
+    pagoError.textContent = '';
+  }));
+  ['pagoCerrar', 'pagoCancelar', 'pagoCerrar2'].forEach(id => document.getElementById(id).addEventListener('click', cerrarPago));
+  pagoDialog.addEventListener('cancel', (e) => { if (pagando) e.preventDefault(); });
+  document.getElementById('pagoVerEntradas').addEventListener('click', () => {
+    cerrarPago();
+    const t = document.getElementById('tabBtnProximas'); document.getElementById('perfil').scrollIntoView();
+    if (t) t.click();
+  });
+
+  // Validación del formulario en el navegador (el servidor repite todas las validaciones).
+  function validarPago() {
+    const numero = pgNumero.value.replace(/\s/g, ''), m = /^(\d{2})\/(\d{2})$/.exec(pgVence.value);
+    const mal = [];
+    if (!luhn(numero)) mal.push([pgNumero, 'El número de tarjeta no es válido.']);
+    if (pgTitular.value.trim().length < 3) mal.push([pgTitular, 'Ingresa el nombre del titular.']);
+    if (!m || +m[1] < 1 || +m[1] > 12) mal.push([pgVence, 'Usa el formato MM/AA, por ejemplo 08/29.']);
+    else { const hoy = new Date(); if (2000 + +m[2] < hoy.getFullYear() || (2000 + +m[2] === hoy.getFullYear() && +m[1] < hoy.getMonth() + 1)) mal.push([pgVence, 'La tarjeta está vencida.']); }
+    if (!/^\d{3,4}$/.test(pgCvv.value)) mal.push([pgCvv, 'El CVV debe tener 3 o 4 dígitos.']);
+    [pgNumero, pgTitular, pgVence, pgCvv].forEach(i => i.classList.toggle('invalido', mal.some(x => x[0] === i)));
+    if (mal.length) { pagoError.textContent = mal[0][1]; mal[0][0].focus(); return false; }
+    return true;
+  }
+  const pausa = ms => new Promise(r => setTimeout(r, ms));
+  function marcarPaso(n) {
+    document.querySelectorAll('#pagoPasos li').forEach((li, i) => {
+      li.classList.toggle('hecho', i < n); li.classList.toggle('activo', i === n);
+      li.querySelector('.ico').textContent = i < n ? '✓' : '';
+    });
+  }
+  function textoPago(datos) {
+    if (!datos) return 'No se pudo procesar el pago.';
+    if (datos.detail) return datos.detail;
+    const p = datos.pago || datos;
+    return Object.values(p).flat()[0] || 'No se pudo procesar el pago.';
+  }
+
+  confirmBtn.addEventListener('click', () => {
     if (!misReservas.size) return;
     if (modoDemo) {
       mensajeTicket('Modo demostración: la compra no se registra. Ejecuta el backend para comprar de verdad.', 'error');
       return;
     }
     if (!usuarioActual) { mensajeTicket('Inicia sesión para continuar con la compra.', 'error'); return; }
-    confirmBtn.disabled = true;
-    mensajeTicket('Procesando la compra…');
+    mensajeTicket('');
+    abrirPago();
+  });
+
+  vistaForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (pagando || !validarPago()) return;
+    pagando = true; pagoError.textContent = '';
+    const pago = { numero: pgNumero.value, titular: pgTitular.value.trim(), vencimiento: pgVence.value, cvv: pgCvv.value };
+    const asientos = [...misReservas.keys()], codigos = [...misReservas.values()].map(x => x.codigo).join(', ');
+    vistaPago('proceso'); marcarPaso(0); await pausa(700);
+    marcarPaso(1);
     try {
-      const r = await apiAuth('/compras/', { method: 'POST', body: JSON.stringify({ asiento_ids: [...misReservas.keys()] }) });
+      const [r] = await Promise.all([
+        apiAuth('/compras/', { method: 'POST', body: JSON.stringify({ asiento_ids: asientos, pago }) }),
+        pausa(1100),
+      ]);
       if (r.ok) {
+        marcarPaso(2); await pausa(700); marcarPaso(3);
         misReservas.clear();
-        mensajeTicket('¡Compra confirmada! ' + r.datos.boletos.length + ' boleto(s), total ' + fmtCOP(Number(r.datos.total)) +
-          '. Código ' + r.datos.id.slice(0, 8).toUpperCase() + '.', 'ok');
-        await recargarAsientos();
-        cargarCompras();
-        cargarEstadoBD();
+        mostrarRecibo(r.datos, codigos);
+        mensajeTicket('¡Compra confirmada! Código ' + r.datos.id.slice(0, 8).toUpperCase() + '.', 'ok');
+        await recargarAsientos(); cargarCompras(); cargarEstadoBD();
       } else {
-        mensajeTicket((r.datos && r.datos.detail) || 'No se pudo confirmar la compra.', 'error');
-        await recargarAsientos();
+        // Pago rechazado o error de validación: la reserva se conserva y se puede reintentar.
+        vistaPago('form'); pagoError.textContent = textoPago(r.datos);
+        if (r.status === 409 || r.status === 404) { await recargarAsientos(); }
+        if (r.status === 409) { pagoPagar.disabled = true; pagoError.textContent += ' Cierra esta ventana y vuelve a seleccionar tus asientos.'; }
       }
-    } catch (e) {
-      mensajeTicket('No se pudo conectar con el servidor. Tu reserva sigue vigente unos minutos.', 'error');
+    } catch (err) {
+      vistaPago('form'); pagoError.textContent = 'No se pudo conectar con el servidor. Tu reserva sigue vigente unos minutos.';
     } finally {
-      pintarPanel();
+      pagando = false; pintarPanel();
     }
   });
+
+  function mostrarRecibo(c, codigos) {
+    const rb = document.getElementById('pagoRecibo'); rb.replaceChildren();
+    const p = c.pago || {};
+    const cod = document.createElement('div'); cod.className = 'fila';
+    const k = document.createElement('span'); k.textContent = 'Código de compra';
+    const v = document.createElement('span'); v.className = 'codigo'; v.textContent = c.id.slice(0, 8).toUpperCase();
+    cod.append(k, v); rb.appendChild(cod);
+    const b0 = c.boletos[0];
+    [['Evento', b0 ? b0.evento : '—'], ['Fecha', b0 ? formatearFecha(b0.fecha_evento) : '—'], ['Lugar', b0 ? b0.lugar : '—'],
+     ['Asientos', c.boletos.map(b => b.codigo).join(', ') || codigos],
+     ['Tarjeta', (p.marca || 'Tarjeta') + ' •••• ' + (p.ultimos4 || '----')],
+     ['Autorización', p.autorizacion || '—'], ['Total pagado', fmtCOP(Number(c.total))]]
+      .forEach(([a, b]) => rb.appendChild(filaResumen(a, b)));
+    vistaPago('exito');
+  }
 
   // ---------- Temporizador real de la reserva ----------
   setInterval(async () => {
@@ -1115,15 +1327,44 @@
     const cont = document.getElementById('comprasList');
     if (!compras.length) { vacio(cont, 'Aún no has comprado boletos.'); return; }
     cont.replaceChildren();
+    const ahora = Date.now();
     compras.forEach(c => {
-      const box = document.createElement('div'); box.className = 'compra';
-      const h = document.createElement('h3');
-      h.textContent = c.boletos.length ? c.boletos[0].evento : 'Compra';
-      const meta = document.createElement('div'); meta.className = 'meta';
-      meta.textContent = formatearFecha(c.fecha) + ' · Total ' + fmtCOP(Number(c.total)) + ' · Código ' + c.id.slice(0, 8).toUpperCase();
+      const b0 = c.boletos[0];
+      const box = document.createElement('div'); box.className = 'compra con-evento';
+      const img = document.createElement('img');
+      img.src = ILUS(b0 ? b0.evento : ''); img.alt = b0 ? 'Ilustración del evento ' + b0.evento : '';
+      const info = document.createElement('div'); info.className = 'info';
+
+      const h = document.createElement('h3'); h.textContent = b0 ? b0.evento : 'Compra';
+      if (b0) {
+        const pasado = Date.parse(b0.fecha_evento) < ahora;
+        const est = document.createElement('span'); est.className = 'estado-evento ' + (pasado ? 'pasado' : 'proximo');
+        est.textContent = pasado ? 'Evento realizado' : 'Próximo evento';
+        h.append(' ', est);
+      }
+      info.appendChild(h);
+
+      if (b0) {
+        const f = document.createElement('div'); f.className = 'meta'; f.textContent = '📅 ' + formatearFecha(b0.fecha_evento);
+        const l = document.createElement('div'); l.className = 'meta'; l.textContent = '📍 ' + b0.lugar;
+        info.append(f, l);
+      }
+
       const ul = document.createElement('ul'); ul.className = 'boletos';
-      c.boletos.forEach(b => { const li = document.createElement('li'); li.textContent = b.codigo; ul.appendChild(li); });
-      box.append(h, meta, ul); cont.appendChild(box);
+      c.boletos.forEach(b => {
+        const li = document.createElement('li');
+        li.textContent = 'Asiento ' + b.codigo + ' · ' + fmtCOP(Number(b.precio));
+        ul.appendChild(li);
+      });
+      info.appendChild(ul);
+
+      const pie = document.createElement('div'); pie.className = 'meta pie';
+      pie.textContent = 'Comprado el ' + formatearFecha(c.fecha) + ' · ' + c.boletos.length +
+        (c.boletos.length === 1 ? ' boleto' : ' boletos') + ' · Total ' + fmtCOP(Number(c.total)) +
+        ' · Código ' + c.id.slice(0, 8).toUpperCase();
+      info.appendChild(pie);
+
+      box.append(img, info); cont.appendChild(box);
     });
   }
 
