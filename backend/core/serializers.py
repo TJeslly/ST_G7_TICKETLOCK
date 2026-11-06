@@ -1,6 +1,9 @@
+import re
+
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
+from . import pagos
 from . import repositories as repo
 from .models import Asiento, Evento, Usuario
 
@@ -112,8 +115,48 @@ class ReservaInSerializer(serializers.Serializer):
     asiento_id = serializers.UUIDField()
 
 
+class PagoSerializer(serializers.Serializer):
+    """Datos de la tarjeta FICTICIA. Se validan y se descartan: nunca se guardan."""
+
+    numero = serializers.CharField(max_length=30, error_messages={
+        "required": "Ingresa el número de la tarjeta.", "blank": "Ingresa el número de la tarjeta."})
+    titular = serializers.CharField(min_length=3, max_length=80, error_messages={
+        "required": "Ingresa el nombre del titular.", "blank": "Ingresa el nombre del titular.",
+        "min_length": "Ingresa el nombre del titular tal como aparece en la tarjeta."})
+    vencimiento = serializers.CharField(max_length=7, error_messages={
+        "required": "Ingresa el vencimiento (MM/AA).", "blank": "Ingresa el vencimiento (MM/AA)."})
+    cvv = serializers.CharField(max_length=4, error_messages={
+        "required": "Ingresa el CVV.", "blank": "Ingresa el CVV."})
+
+    def validate_numero(self, value):
+        numero = pagos.solo_digitos(value)
+        if not 13 <= len(numero) <= 19 or not pagos.luhn_valido(numero):
+            raise serializers.ValidationError("El número de tarjeta no es válido.")
+        return numero
+
+    def validate_titular(self, value):
+        return " ".join(value.split())
+
+    def validate_cvv(self, value):
+        if not re.fullmatch(r"\d{3,4}", value.strip()):
+            raise serializers.ValidationError("El CVV debe tener 3 o 4 dígitos.")
+        return value.strip()
+
+    def validate(self, datos):
+        m = re.fullmatch(r"(\d{1,2})\s*/\s*(\d{2}|\d{4})", datos["vencimiento"].strip())
+        if not m or not 1 <= int(m.group(1)) <= 12:
+            raise serializers.ValidationError({"vencimiento": "Usa el formato MM/AA, por ejemplo 08/29."})
+        anio = int(m.group(2))
+        anio = anio + 2000 if anio < 100 else anio
+        if not pagos.vencimiento_vigente(int(m.group(1)), anio):
+            raise serializers.ValidationError({"vencimiento": "La tarjeta está vencida."})
+        datos["mes"], datos["anio"] = int(m.group(1)), anio
+        return datos
+
+
 class CompraInSerializer(serializers.Serializer):
     asiento_ids = serializers.ListField(child=serializers.UUIDField(), min_length=1, max_length=4)
+    pago = PagoSerializer(error_messages={"required": "Ingresa los datos de pago para confirmar la compra."})
 
 
 class EventoAdminSerializer(serializers.Serializer):

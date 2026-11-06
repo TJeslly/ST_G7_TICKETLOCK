@@ -64,6 +64,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+from . import pagos
 from .errores import ErrorNegocio
 
 
@@ -152,13 +153,15 @@ def mis_reservas(usuario):
     return repo.bloqueos_vigentes_de_usuario(usuario)
 
 
-def comprar(usuario, asiento_ids):
+def comprar(usuario, asiento_ids, pago):
     """Confirma la compra de asientos reservados por el usuario (RF07, RF08).
 
     Todo ocurre en UNA transacción: se verifican las reservas, se crea la compra con
     su detalle, los asientos pasan a VENDIDO y se audita. Si algo falla, no queda nada
-    a medias. Repetir la misma petición devuelve la compra ya hecha, sin cobrar dos veces.
-    Devuelve ``(solicitud, creada)``.
+    a medias. El pago (simulado) se autoriza DESPUÉS de verificar las reservas y ANTES de
+    crear la compra: si la tarjeta es rechazada no se vende nada y la reserva se conserva.
+    Repetir la misma petición devuelve la compra ya hecha, sin cobrar dos veces.
+    Devuelve ``(solicitud, creada, comprobante_de_pago)``.
     """
     if not isinstance(asiento_ids, list) or not asiento_ids:
         raise ErrorNegocio("Selecciona al menos un asiento.", 400)
@@ -167,13 +170,13 @@ def comprar(usuario, asiento_ids):
         raise ErrorNegocio(f"Máximo {max_boletos()} boletos por compra.", 400)
     try:
         with transaction.atomic():
-            return _comprar(usuario, ids)
+            return _comprar(usuario, ids, pago)
     except ErrorNegocio:
         repo.registrar_auditoria("CONFIRMAR_COMPRA", f"usuarios/{usuario.id}", "DENIED")
         raise
 
 
-def _comprar(usuario, ids):
+def _comprar(usuario, ids, pago):
     liberar_vencidos()
     asientos = repo.asientos_para_actualizar(ids)  # SELECT ... FOR UPDATE, en orden fijo
     if len(asientos) != len(ids):
@@ -181,7 +184,7 @@ def _comprar(usuario, ids):
     previa = repo.solicitud_de_asientos_vendidos(asientos)
     if previa is not None:
         if previa.usuario_id == usuario.id:
-            return previa, False  # idempotencia: ya estaba comprada
+            return previa, False, None  # idempotencia: ya estaba comprada, no se cobra otra vez
         raise ErrorNegocio("Esos asientos ya fueron vendidos.", 409)
     for a in asientos:
         if a.evento.estado != "PUBLICADO":
@@ -193,9 +196,10 @@ def _comprar(usuario, ids):
             raise ErrorNegocio(f"El asiento {a.codigo} no está reservado a tu nombre.", 409)
         if b.fecha_expiracion <= timezone.now():
             raise ErrorNegocio(f"La reserva del asiento {a.codigo} expiró.", 409)
+    comprobante = pagos.autorizar(pago, precio_boleto() * len(asientos))  # 402 si se rechaza
     solicitud = repo.crear_compra(usuario, asientos, precio_boleto())
     repo.registrar_auditoria("CONFIRMAR_COMPRA", f"solicitudes_compra/{solicitud.id}", "SUCCESS", solicitud=solicitud)
-    return solicitud, True
+    return solicitud, True, comprobante
 
 
 def mis_compras(usuario):

@@ -144,11 +144,14 @@ class CompraView(CorsAPIView):
         serializer = CompraInSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        solicitud, creada = services.comprar(
-            self.usuario, [str(i) for i in serializer.validated_data["asiento_ids"]]
+        solicitud, creada, comprobante = services.comprar(
+            self.usuario, [str(i) for i in serializer.validated_data["asiento_ids"]],
+            serializer.validated_data["pago"],
         )
         datos = compra_a_dict(solicitud, repo.detalle_de_solicitud(solicitud))
         datos["ya_procesada"] = not creada
+        if comprobante:
+            datos["pago"] = comprobante
         return Response(datos, status=status.HTTP_201_CREATED if creada else status.HTTP_200_OK)
 
     def get(self, request):
