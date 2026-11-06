@@ -233,6 +233,20 @@ class PagoSimuladoTests(TestCase):
         self.assertIn("pago", r.json())
         self.assertEqual(SolicitudCompra.objects.count(), 0)
 
+    def test_sin_asientos_el_mensaje_esta_en_espanol(self):
+        r = post(self.client, "/api/compras/", {"asiento_ids": [], "pago": pago_ok()}, self.ana)
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("Selecciona al menos un asiento", r.json()["asiento_ids"][0])
+        self.assertNotIn("Ensure", r.content.decode())
+
+    def test_reserva_vencida_con_tarjeta_valida_responde_409_en_espanol(self):
+        self.reservar()
+        Bloqueo.objects.update(fecha_expiracion=timezone.now() - timedelta(minutes=1))
+        r = self.pagar()
+        self.assertEqual(r.status_code, 409)
+        self.assertEqual(SolicitudCompra.objects.count(), 0)
+        self.assertNotIn("Ensure", r.content.decode())
+
     def test_tarjeta_aprobada_devuelve_comprobante(self):
         self.reservar()
         r = self.pagar()
@@ -316,6 +330,26 @@ class PagoSimuladoTests(TestCase):
         r = self.pagar()  # no reservó: se rechaza antes de tocar la pasarela
         self.assertEqual(r.status_code, 409)
         self.assertEqual(SolicitudCompra.objects.count(), 0)
+
+
+class LimpiezaDePruebaTests(TestCase):
+    def test_limpia_compras_y_libera_asientos_conservando_usuarios(self):
+        from django.core.management import call_command
+        ana, admin = crear_usuario(), crear_usuario("admin@correo.com", "ADMIN")
+        _, asientos = crear_evento(2)
+        post(self.client, "/api/reservas/", {"asiento_id": str(asientos[0].id)}, ana)
+        post(self.client, "/api/compras/", {"asiento_ids": [str(asientos[0].id)], "pago": pago_ok()}, ana)
+        self.assertEqual(SolicitudCompra.objects.count(), 1)
+        call_command("limpiar_datos_prueba", "--si", verbosity=0)
+        self.assertEqual((SolicitudCompra.objects.count(), DetalleCompra.objects.count(), Bloqueo.objects.count(), Auditoria.objects.count()), (0, 0, 0, 0))
+        self.assertEqual(Asiento.objects.exclude(estado="DISPONIBLE").count(), 0)
+        self.assertEqual(Usuario.objects.count(), 2)
+
+    def test_con_usuarios_conserva_solo_al_admin(self):
+        from django.core.management import call_command
+        crear_usuario(), crear_usuario("admin@correo.com", "ADMIN")
+        call_command("limpiar_datos_prueba", "--usuarios", "--si", verbosity=0)
+        self.assertEqual(list(Usuario.objects.values_list("email", flat=True)), ["admin@correo.com"])
 
 
 class AdminTests(TestCase):
